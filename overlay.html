@@ -1664,6 +1664,7 @@
         // Carregar dados do usuário após login
         resetAndLoadNotas();
         loadBankData();
+        loadWallpaper();
         startUnreadPolling();
       } catch (err) {
         setError('Servidor offline');
@@ -3091,18 +3092,21 @@
   
   // Carregar wallpaper — servidor é a fonte primária
   function applyWallpaperData(url, fit) {
-    setWallpaper(url, fit || 'cover', false);
+    wallpaperBg.src = url;
+    wallpaperBg.style.objectFit = fit || 'cover';
+    wallpaperBg.style.display = 'block';
+    wallpaperOverlay.style.display = 'block';
     document.getElementById('wallpaper-url-input').value = url;
     document.getElementById('wallpaper-size').value = fit || 'cover';
   }
 
-  (async () => {
+  async function loadWallpaper() {
     const result = await cloudLoadAll();
     if (result.data.pj_wallpaper) {
       applyWallpaperData(result.data.pj_wallpaper, result.data.pj_wallpaper_fit);
       console.log('✅ Wallpaper carregado do servidor');
     }
-  })();
+  }
 
   // ===== CONFIGURAÇÕES UI =====
   const wallpaperUrlInput = document.getElementById('wallpaper-url-input');
