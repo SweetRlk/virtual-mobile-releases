@@ -1,6 +1,6 @@
 {
   "name": "virtual-mobile",
-  "version": "1.1.2",
+  "version": "1.0.1",
   "main": "main.js",
   "description": "Celular para ETS2",
   "author": "SWE",
@@ -35,7 +35,7 @@
     "publish": {
       "provider": "github",
       "owner": "SweetRlk",
-      "repo": "attcll"
+      "repo": "virtual-mobile-releases"
     },
     "files": [
       "main.js",

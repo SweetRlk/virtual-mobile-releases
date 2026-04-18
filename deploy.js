@@ -53,19 +53,33 @@ function run(cmd) {
     run('npm run build');
     console.log('\n✅ Build concluído!');
 
-    // 3. Git commit + tag
+    // 3. Git commit + tag (repo privado — código)
     console.log('\n📝 Git commit + tag...');
     run('git add -A');
     run(`git commit -m "v${newVersion}"`);
     run(`git tag v${newVersion}`);
 
-    // 4. Push + publish release
-    console.log('\n☁️ Publicando no GitHub...');
+    // 4. Push código pro repo privado
+    console.log('\n☁️ Push pro repo privado...');
     run('git push origin main --tags');
 
-    // 5. Publish com electron-builder (upload dos assets para a release)
-    console.log('\n📤 Upload dos instaladores para GitHub Release...');
-    run('npx electron-builder --publish always');
+    // 5. Criar release no repo público e fazer upload do instalador
+    console.log('\n📤 Criando release no repo público...');
+    const distDir = path.join(__dirname, 'dist');
+    const setupExe = `Virtual-Mobile-Setup-${newVersion}.exe`;
+    const blockmap = `Virtual-Mobile-Setup-${newVersion}.exe.blockmap`;
+    const latestYml = 'latest.yml';
+    
+    const assets = [setupExe, blockmap, latestYml]
+      .map(f => path.join(distDir, f))
+      .filter(f => fs.existsSync(f));
+    
+    if (assets.length === 0) {
+      throw new Error('Nenhum arquivo de instalação encontrado em dist/');
+    }
+    
+    const assetFlags = assets.map(f => `"${f}"`).join(' ');
+    run(`gh release create v${newVersion} ${assetFlags} --repo SweetRlk/virtual-mobile-releases --title "v${newVersion}" --notes "Virtual Mobile v${newVersion}"`);
 
     console.log('\n╔══════════════════════════════════════╗');
     console.log(`║  ✅ v${newVersion} publicado com sucesso!     ║`);
