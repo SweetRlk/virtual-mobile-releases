@@ -5,14 +5,50 @@ import secrets
 import urllib.request
 import json as json_lib
 import random
+import time
 from flask import Flask, request, jsonify, render_template_string, send_from_directory
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=['app://*'])
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'sweet.db')
-ADMIN_KEY = os.environ.get('ADMIN_KEY', 'sweet2026')
+ADMIN_KEY = os.environ.get('ADMIN_KEY', secrets.token_hex(16))
+
+# ===== RATE LIMITING (in-memory) =====
+SESSION_TTL = 86400  # Token expira em 24h
+LOGIN_MAX_ATTEMPTS = 5  # Máximo de tentativas por IP
+LOGIN_LOCKOUT_SECONDS = 300  # Bloqueio de 5 minutos após exceder tentativas
+_login_attempts = {}  # { ip: { count: int, first_attempt: float, locked_until: float } }
+
+def check_login_rate_limit(ip):
+    """Returns (allowed: bool, retry_after: int). Blocks brute-force on login."""
+    now = time.time()
+    entry = _login_attempts.get(ip)
+    if not entry:
+        return True, 0
+    # Locked out?
+    if entry.get('locked_until', 0) > now:
+        return False, int(entry['locked_until'] - now)
+    # Window expired? Reset
+    if now - entry['first_attempt'] > LOGIN_LOCKOUT_SECONDS:
+        _login_attempts.pop(ip, None)
+        return True, 0
+    if entry['count'] >= LOGIN_MAX_ATTEMPTS:
+        entry['locked_until'] = now + LOGIN_LOCKOUT_SECONDS
+        return False, LOGIN_LOCKOUT_SECONDS
+    return True, 0
+
+def record_login_attempt(ip, success):
+    now = time.time()
+    if success:
+        _login_attempts.pop(ip, None)
+        return
+    entry = _login_attempts.get(ip)
+    if not entry or (now - entry['first_attempt'] > LOGIN_LOCKOUT_SECONDS):
+        _login_attempts[ip] = {'count': 1, 'first_attempt': now, 'locked_until': 0}
+    else:
+        entry['count'] += 1
 
 # Discord config (server-side only — never sent to client)
 DISCORD_WEBHOOK_PEDAGIO = os.environ.get('DISCORD_WEBHOOK_PEDAGIO', 'https://discord.com/api/webhooks/1494199351998677123/JWYCkWfPXzC5us4O_IC_y7nmb9_LIiDsZX8AoQP0tJPx6kylvRWjUg2paHL037W7KHJt')
@@ -171,15 +207,25 @@ def init_db():
 # ===== HELPERS =====
 
 def verify_token(token):
-    """Verify session token and return user row or None."""
+    """Verify session token and return user row or None. Enforces token expiration."""
     if not token:
         return None
     conn = get_db()
     row = conn.execute('''
-        SELECT u.id, u.username, u.discord_id, u.avatar_url, u.phone
+        SELECT u.id, u.username, u.discord_id, u.avatar_url, u.phone, s.created_at as session_created
         FROM sessions s JOIN users u ON s.user_id = u.id
         WHERE s.token = ?
     ''', (token,)).fetchone()
+    if row:
+        # Check token expiration
+        import datetime
+        created = datetime.datetime.strptime(row['session_created'], '%Y-%m-%d %H:%M:%S') if isinstance(row['session_created'], str) else row['session_created']
+        age = (datetime.datetime.utcnow() - created).total_seconds()
+        if age > SESSION_TTL:
+            conn.execute('DELETE FROM sessions WHERE token = ?', (token,))
+            conn.commit()
+            conn.close()
+            return None
     conn.close()
     return row
 
@@ -265,6 +311,14 @@ def register():
 
 @app.route('/api/login', methods=['POST'])
 def login():
+    # Rate limiting
+    client_ip = request.remote_addr
+    allowed, retry_after = check_login_rate_limit(client_ip)
+    if not allowed:
+        resp = jsonify({'error': f'Muitas tentativas. Tente novamente em {retry_after}s.'})
+        resp.headers['Retry-After'] = str(retry_after)
+        return resp, 429
+
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON inválido'}), 400
@@ -280,10 +334,12 @@ def login():
 
     if not user:
         conn.close()
+        record_login_attempt(client_ip, False)
         return jsonify({'error': 'Usuário ou PIN incorreto'}), 401
 
     if not bcrypt.checkpw(pin.encode('utf-8'), user['pin_hash'].encode('utf-8')):
         conn.close()
+        record_login_attempt(client_ip, False)
         return jsonify({'error': 'Usuário ou PIN incorreto'}), 401
 
     # HWID validation
@@ -306,6 +362,8 @@ def login():
     conn.execute('INSERT INTO sessions (token, user_id) VALUES (?, ?)', (token, user['id']))
     conn.commit()
     conn.close()
+
+    record_login_attempt(client_ip, True)
 
     return jsonify({
         'success': True,

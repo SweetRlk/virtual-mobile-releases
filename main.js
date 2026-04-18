@@ -6,6 +6,11 @@ const fs = require('fs');
 const path = require("path");
 const { execSync } = require("child_process");
 
+// Load config
+const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+const API_URL = config.api.url;
+const APP_VERSION = require('./package.json').version;
+
 const user32 = koffi.load("user32.dll");
 const GetForegroundWindow = user32.func("void* __stdcall GetForegroundWindow()");
 const GetWindowTextW = user32.func("int __stdcall GetWindowTextW(void*, uint16_t*, int)");
@@ -103,9 +108,10 @@ app.whenReady().then(() => {
     icon: path.join(__dirname, 'icon.ico'),
     title: 'Virtual Mobile',
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webviewTag: true
+      nodeIntegration: false,
+      contextIsolation: true,
+      webviewTag: true,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 
@@ -126,6 +132,8 @@ app.whenReady().then(() => {
 
   ipcMain.handle("get-hwid", () => getHwid());
   ipcMain.handle("is-game-running", () => gameRunning);
+  ipcMain.handle("get-api-url", () => API_URL);
+  ipcMain.handle("get-app-version", () => APP_VERSION);
 
   // Captura DACTE HTML como imagem PNG (base64)
   ipcMain.handle("capture-nota-image", async (event, htmlContent) => {

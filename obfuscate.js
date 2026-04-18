@@ -2,7 +2,7 @@ const JavaScriptObfuscator = require('javascript-obfuscator');
 const fs = require('fs');
 const path = require('path');
 
-const FILES_TO_OBFUSCATE = ['main.js', 'telemetry.js'];
+const FILES_TO_OBFUSCATE = ['main.js', 'telemetry.js', 'preload.js'];
 const BACKUP_DIR = path.join(__dirname, '.backup');
 
 // Create backup dir

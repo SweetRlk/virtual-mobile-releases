@@ -1570,9 +1570,8 @@
 
 <script>
 
-  const { ipcRenderer } = require('electron');
-  const _fs = require('fs');
-  const _path = require('path');
+  // ===== ELECTRON API (via preload contextBridge) =====
+  const eAPI = window.electronAPI;
 
   // ===== LOCAL STORE (apenas token/sessão — dados ficam no servidor) =====
   const localStore = {
@@ -1582,9 +1581,17 @@
   };
   
   // ===== LOGIN SYSTEM =====
-  const API_URL = 'http://37.148.133.228:3000';
-  const APP_VERSION = require('./package.json').version;
+  let API_URL = '';
+  let APP_VERSION = '';
   let loggedInUser = null; // { username, discord_id, token }
+
+  // Load config from main process (API_URL is never in the HTML source)
+  (async () => {
+    try {
+      API_URL = await eAPI.getApiUrl();
+      APP_VERSION = await eAPI.getAppVersion();
+    } catch(e) { console.error('Failed to load config:', e); }
+  })();
 
   function userKey(key) {
     const u = loggedInUser ? loggedInUser.username : '';
@@ -1633,7 +1640,7 @@
 
       try {
         let hwid = '';
-        try { hwid = await ipcRenderer.invoke('get-hwid'); } catch(e) {}
+        try { hwid = await eAPI.getHwid(); } catch(e) {}
 
         const res = await fetch(API_URL + '/api/login', {
           method: 'POST',
@@ -1714,7 +1721,7 @@
 
   // Discord user ID (recebido do main process)
   let discordUserId = '';
-  ipcRenderer.on('discord-config', (event, data) => {
+  eAPI.onDiscordConfig((data) => {
     discordUserId = data.userDiscordId || '';
   });
 
@@ -1732,7 +1739,7 @@
   let lastFreteTimestamp = 0;
   
   // Listener para event-transition
-  ipcRenderer.on('event-transition', (event, data) => {
+  eAPI.onEventTransition((data) => {
     
     if (!data || !data.event || !data.type) {
       console.warn('Dados inválidos:', data);
@@ -1895,18 +1902,18 @@
       dragging = false;
       const rect = phone.getBoundingClientRect();
       if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
-        ipcRenderer.send('set-ignore-mouse', true);
+        eAPI.setIgnoreMouse(true);
       }
     }
   });
 
   // ===== MOUSE FORWARDING =====
-  phone.addEventListener('mouseenter', () => ipcRenderer.send('set-ignore-mouse', false));
-  phone.addEventListener('mouseleave', () => { if (!dragging) ipcRenderer.send('set-ignore-mouse', true); });
+  phone.addEventListener('mouseenter', () => eAPI.setIgnoreMouse(false));
+  phone.addEventListener('mouseleave', () => { if (!dragging) eAPI.setIgnoreMouse(true); });
 
   const toggleBtn = document.getElementById('toggle-btn');
-  toggleBtn.addEventListener('mouseenter', () => ipcRenderer.send('set-ignore-mouse', false));
-  toggleBtn.addEventListener('mouseleave', () => ipcRenderer.send('set-ignore-mouse', true));
+  toggleBtn.addEventListener('mouseenter', () => eAPI.setIgnoreMouse(false));
+  toggleBtn.addEventListener('mouseleave', () => eAPI.setIgnoreMouse(true));
 
   // ===== TOGGLE PHONE =====
   let phoneVisible = true;
@@ -1935,7 +1942,7 @@
 
   document.getElementById('power-btn')?.addEventListener('click', (e) => {
     e.stopPropagation();
-    ipcRenderer.send('power-off');
+    eAPI.powerOff();
   });
 
   function showPhone() {
@@ -1981,7 +1988,7 @@
     notchLongPressed = false;
     notchTimer = setTimeout(() => {
       notchLongPressed = true;
-      ipcRenderer.send('power-off');
+      eAPI.powerOff();
     }, 1000);
   });
   notchArea.addEventListener('mouseup', () => {
@@ -1993,14 +2000,14 @@
   });
 
   // ===== TOGGLE PHONE (F8) =====
-  ipcRenderer.on('toggle-phone', () => {
+  eAPI.onTogglePhone(() => {
     if (phoneVisible) hidePhone();
     else showPhone();
   });
 
   // ===== INTERACT MODE (F9) =====
   const interactBadge = document.getElementById('interact-badge');
-  ipcRenderer.on('interact-mode', (event, active) => {
+  eAPI.onInteractMode((active) => {
     if (active) {
       phone.classList.add('interact-active');
       interactBadge.classList.add('visible');
@@ -2013,7 +2020,7 @@
   // ===== GAME FOCUS DETECTOR =====
   let gameActive = true;
   
-  ipcRenderer.on('game-focus-changed', (event, isInFocus) => {
+  eAPI.onGameFocusChanged((isInFocus) => {
     gameActive = isInFocus;
     const phone = document.getElementById('phone');
     const toggleBtn = document.getElementById('toggle-btn');
@@ -2028,7 +2035,7 @@
   });
 
   // ===== GAME RUNNING DETECTOR =====
-  ipcRenderer.on('game-running-changed', (event, isRunning) => {
+  eAPI.onGameRunningChanged((isRunning) => {
     const gnr = document.getElementById('game-not-running');
     if (!gnr) return;
     if (isRunning) {
@@ -2039,7 +2046,7 @@
   });
 
   // Check initial state immediately
-  ipcRenderer.invoke('is-game-running').then(isRunning => {
+  eAPI.isGameRunning().then(isRunning => {
     const gnr = document.getElementById('game-not-running');
     if (!gnr) return;
     if (isRunning) {
@@ -2050,7 +2057,7 @@
   });
 
   // ===== AUTO-UPDATE NOTIFICATION =====
-  ipcRenderer.on('update-status', (event, data) => {
+  eAPI.onUpdateStatus((data) => {
     let banner = document.getElementById('update-banner');
     if (!banner) {
       banner = document.createElement('div');
@@ -2075,7 +2082,7 @@
     } else if (data.status === 'ready') {
       banner.innerHTML = '✅ Atualização v' + data.version + ' pronta — <u>Clique para instalar</u>';
       banner.style.cursor = 'pointer';
-      banner.onclick = () => { ipcRenderer.send('install-update'); };
+      banner.onclick = () => { eAPI.installUpdate(); };
     }
   });
 
@@ -2631,7 +2638,7 @@
     if (!loggedInUser?.token) return;
     try {
       const html = buildDacteStandaloneHtml(nota);
-      const base64Png = await ipcRenderer.invoke('capture-nota-image', html);
+      const base64Png = await eAPI.captureNotaImage(html);
       if (!base64Png) {
         console.warn('Falha ao capturar imagem da nota');
         // Fallback: enviar texto
@@ -2946,7 +2953,7 @@
 
   // ===== TELEMETRY =====
   let connected = false;
-  ipcRenderer.on('telemetry', (event, data) => {
+  eAPI.onTelemetry((data) => {
     connected = !!data;
     ['gps','fuel','dash'].forEach(app => {
       const con = document.getElementById(app + '-connected');
