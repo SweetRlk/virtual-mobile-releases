@@ -61,7 +61,8 @@ function run(cmd) {
 
     // 4. Push código pro repo privado
     console.log('\n☁️ Push pro repo privado...');
-    run('git push origin main --tags');
+    run('git push origin main');
+    run(`git push origin v${newVersion}`);
 
     // 5. Criar release no repo público e fazer upload do instalador
     console.log('\n📤 Criando release no repo público...');
