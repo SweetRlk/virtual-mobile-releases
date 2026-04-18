@@ -57,7 +57,7 @@ function run(cmd) {
     console.log('\n📝 Git commit + tag...');
     run('git add -A');
     run(`git commit -m "v${newVersion}"`);
-    run(`git tag v${newVersion}`);
+    run(`git tag -f v${newVersion}`);
 
     // 4. Push código pro repo privado
     console.log('\n☁️ Push pro repo privado...');
