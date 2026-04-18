@@ -1,0 +1,3828 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  /* ===== WALLPAPER CUSTOMIZATION =====
+     Para mudar o papel de parede, edite a URL abaixo:
+     Exemplo: url('https://i.pinimg.com/736x/b5/5c/ba/b55cba13a814993cdbd1c11411de28cc.jpg')
+     Deixe vazio ('') para usar o gradiente padrão
+  */
+  :root {
+    --wallpaper-url: url('https://i.pinimg.com/736x/b5/5c/ba/b55cba13a814993cdbd1c11411de28cc.jpg');
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: transparent;
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    overflow: hidden;
+    color: white;
+    user-select: none;
+  }
+
+  /* ===== PHONE FRAME ===== */
+  #phone {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 230px;
+    height: 480px;
+    background: #000;
+    border-radius: 32px;
+    border: 3px solid #1a1a1a;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 8px 40px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+  }
+  
+  #phone.yt-landscape {
+    width: 480px;
+    height: 280px;
+    border-radius: 20px;
+  }
+
+  /* ===== NOTCH ===== */
+  #notch-area {
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 2px;
+    background: #000;
+    flex-shrink: 0;
+  }
+  #notch {
+    width: 70px;
+    height: 18px;
+    background: #000;
+    border-radius: 0 0 12px 12px;
+    border: 1px solid #111;
+    border-top: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #notch::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #1a1a2e;
+    border-radius: 50%;
+  }
+
+  /* ===== STATUS BAR ===== */
+  #statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 16px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+    background: #000;
+    cursor: grab;
+  }
+  #statusbar:active { cursor: grabbing; }
+  .sb-left { display: flex; align-items: center; gap: 4px; }
+  .sb-center { font-size: 11px; font-weight: 600; }
+  .sb-right { display: flex; align-items: center; gap: 4px; font-size: 10px; }
+  #power-btn { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.7; border-radius: 6px; transition: background 0.2s, opacity 0.2s; }
+  #power-btn:hover { background: rgba(255,255,255,0.08); opacity: 1; }
+  #power-btn svg { display: block; }
+  .signal-bars { display: flex; align-items: flex-end; gap: 1px; height: 10px; }
+
+
+  #power-off-screen {
+    position: absolute;
+    inset: 0;
+    background: #010101;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    color: white;
+    z-index: 50;
+  }
+  #power-off-screen svg { width: 28px; height: 28px; opacity: 0.7; }
+  #power-off-screen span { font-size: 10px; opacity: 0.5; letter-spacing: 1px; }
+  #phone.powered-off .page { display: none !important; }
+  #phone.powered-off #screen { background: #000; }
+  #phone.powered-off #power-off-screen { display: flex; }
+  .signal-bar { width: 3px; background: white; border-radius: 1px; }
+  .signal-bar:nth-child(1) { height: 3px; }
+  .signal-bar:nth-child(2) { height: 5px; }
+  .signal-bar:nth-child(3) { height: 7px; }
+  .signal-bar:nth-child(4) { height: 10px; }
+  .battery { width: 20px; height: 9px; border: 1px solid rgba(255,255,255,0.7); border-radius: 2px; padding: 1px; position: relative; }
+  .battery::after { content: ''; position: absolute; right: -3px; top: 2px; width: 2px; height: 4px; background: rgba(255,255,255,0.7); border-radius: 0 1px 1px 0; }
+  .battery-fill { height: 100%; background: #34c759; border-radius: 1px; width: 80%; }
+
+  /* ===== SCREEN ===== */
+  #screen {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(170deg, #0a0a1e 0%, #0d0d12 40%, #0a0a0a 100%);
+    background-attachment: fixed;
+  }
+  
+  #wallpaper-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    display: none;
+    pointer-events: none;
+  }
+  
+  #wallpaper-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1;
+    display: none;
+    pointer-events: none;
+  }
+
+  /* ===== PAGES ===== */
+  .page {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    z-index: 5;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .page::-webkit-scrollbar { display: none; }
+  .page.active { display: flex; animation: pageIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateX(40px) scale(0.97); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  /* ===== HOME SCREEN ===== */
+  #home { padding: 12px; overflow: hidden !important; }
+  .home-widget { text-align: center; padding: 10px 0 8px; }
+  .widget-time { font-size: 44px; font-weight: 200; line-height: 1; color: #ffffff; letter-spacing: -2px; text-shadow: 0 0 30px rgba(255,255,255,0.15); }
+  .widget-date { font-size: 11px; opacity: 0.4; margin-top: 6px; letter-spacing: 1px; text-transform: capitalize; }
+
+  .app-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 4px 4px; }
+  .app-icon {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 3px; border-radius: 12px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+  }
+  .app-icon:active { transform: scale(0.85); background: rgba(255,255,255,0.05); }
+  .icon-circle {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 16px; position: relative;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .app-icon:active .icon-circle { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .icon-circle svg { width: 26px; height: 26px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25)); }
+  .i { display: inline-block; vertical-align: -2px; margin-right: 4px; flex-shrink: 0; }
+  .icon-circle.ic-messages { background: linear-gradient(180deg, #25d366 0%, #128c7e 100%); }
+  .icon-circle.ic-gps { background: linear-gradient(180deg, #4285f4 0%, #1a73e8 100%); }
+  .icon-circle.ic-fuel { background: linear-gradient(180deg, #ff9800 0%, #e65100 100%); }
+  .icon-circle.ic-dash { background: linear-gradient(180deg, #ef5350 0%, #c62828 100%); }
+  .icon-circle.ic-notas { background: linear-gradient(180deg, #ffc107 0%, #ff8f00 100%); }
+  .icon-circle.ic-yt { background: #ff0000; }
+  .icon-circle.ic-config { background: linear-gradient(180deg, #8e8e93 0%, #48484a 100%); }
+  .icon-circle.ic-banco { background: linear-gradient(180deg, #9b19c2 0%, #820ad1 100%); }
+  .icon-circle.ic-notif { background: linear-gradient(180deg, #ff6b6b 0%, #ee5a24 100%); }
+  .app-label { font-size: 9px; opacity: 0.7; font-weight: 500; letter-spacing: 0.2px; }
+  .badge {
+    position: absolute; top: -2px; right: -2px; background: #ff3b30; color: white;
+    font-size: 9px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px;
+    display: none; align-items: center; justify-content: center; padding: 0 4px;
+    box-shadow: 0 0 8px rgba(255,59,48,0.5);
+    animation: badgePopIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .badge.visible { display: flex; }
+  @keyframes badgePopIn {
+    from { transform: scale(0); }
+    50% { transform: scale(1.3); }
+    to { transform: scale(1); }
+  }
+
+  /* ===== APP COMMON ===== */
+  .app-topbar { display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px; flex-shrink: 0; }
+  .back-btn { font-size: 18px; cursor: pointer; opacity: 0.5; transition: opacity 0.15s; line-height: 1; }
+  .back-btn:hover { opacity: 1; }
+  .app-title { font-size: 16px; font-weight: 600; }
+  .app-body { flex: 1; padding: 0 12px 12px; overflow-y: auto; scrollbar-width: none; }
+  .app-body::-webkit-scrollbar { display: none; }
+
+  .card { background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 14px; padding: 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.04); transition: background 0.2s, transform 0.2s; }
+  .card:active { transform: scale(0.98); background: rgba(255,255,255,0.08); }
+  .card-title { font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .card-value { font-size: 20px; font-weight: 600; }
+  .card-sub { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+  .card-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+  .card-row + .card-row { border-top: 1px solid rgba(255,255,255,0.05); }
+  .card-row-label { font-size: 12px; opacity: 0.5; }
+  .card-row-value { font-size: 12px; font-weight: 600; }
+
+  /* ===== MESSAGES / WHATSAPP ===== */
+  .msg {
+    background: rgba(255,255,255,0.05); padding: 10px 12px; margin-bottom: 6px;
+    border-radius: 12px; font-size: 12px; border-left: 3px solid #25d366; animation: msgIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    transition: background 0.15s;
+  }
+  .msg:active { background: rgba(255,255,255,0.08); }
+  .msg-time { font-size: 9px; opacity: 0.3; margin-top: 4px; }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .empty-state { text-align: center; opacity: 0.3; padding: 40px 20px; font-size: 12px; }
+
+  /* WhatsApp conversation list */
+  .wa-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+  .wa-tab { flex: 1; text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; opacity: 0.4; cursor: pointer; transition: all 0.2s; position: relative; }
+  .wa-tab.active { opacity: 1; }
+  .wa-tab.active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 2px; background: #25d366; border-radius: 1px; }
+  .wa-convo-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    cursor: pointer; transition: background 0.15s; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .wa-convo-item:active { background: rgba(255,255,255,0.06); }
+  .wa-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: white; text-transform: uppercase;
+  }
+  .wa-convo-info { flex: 1; min-width: 0; }
+  .wa-convo-name { font-size: 13px; font-weight: 600; }
+  .wa-convo-last { font-size: 10px; opacity: 0.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .wa-convo-right { text-align: right; flex-shrink: 0; }
+  .wa-convo-time { font-size: 9px; opacity: 0.3; }
+  .wa-convo-unread {
+    background: #25d366; color: #000; font-size: 9px; font-weight: 700;
+    min-width: 16px; height: 16px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 4px; margin-top: 2px;
+  }
+  .wa-new-btn {
+    position: absolute; bottom: 14px; right: 14px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #25d366; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 12px rgba(37,211,102,0.4);
+    transition: transform 0.15s;
+  }
+  .wa-new-btn:active { transform: scale(0.9); }
+
+  /* WhatsApp chat view */
+  .wa-chat-header {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  }
+  .wa-chat-name { font-size: 14px; font-weight: 600; }
+  .wa-chat-status { font-size: 9px; opacity: 0.4; }
+  .wa-chat-messages {
+    flex: 1; overflow-y: auto; padding: 10px 10px; scrollbar-width: none;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .wa-chat-messages::-webkit-scrollbar { display: none; }
+  .wa-bubble {
+    max-width: 80%; padding: 6px 10px; border-radius: 10px;
+    font-size: 11px; line-height: 1.4; position: relative;
+    animation: msgIn 0.25s ease;
+  }
+  .wa-bubble.mine {
+    background: #005c4b; align-self: flex-end;
+    border-bottom-right-radius: 2px;
+  }
+  .wa-bubble.theirs {
+    background: rgba(255,255,255,0.1); align-self: flex-start;
+    border-bottom-left-radius: 2px;
+  }
+  .wa-bubble-time { font-size: 8px; opacity: 0.4; text-align: right; margin-top: 2px; }
+  .wa-input-bar {
+    display: flex; gap: 6px; padding: 8px 10px; flex-shrink: 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .wa-input {
+    flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px; padding: 8px 12px; font-size: 11px; color: white;
+    outline: none; font-family: inherit;
+  }
+  .wa-input::placeholder { color: rgba(255,255,255,0.3); }
+  .wa-input:focus { border-color: rgba(37,211,102,0.5); }
+  .wa-send-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: none;
+    background: #25d366; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .wa-send-btn:active { transform: scale(0.9); }
+  .wa-send-btn:hover { background: #20bd5a; }
+
+  /* User picker modal */
+  .wa-user-list { padding: 8px 14px; }
+  .wa-user-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: opacity 0.15s;
+  }
+  .wa-user-item:active { opacity: 0.6; }
+  .wa-user-item .wa-avatar { flex-shrink: 0; }
+  .wa-user-item-name { font-size: 12px; font-weight: 600; }
+  .wa-user-item-sub { font-size: 9px; opacity: 0.35; }
+  .wa-bubble-sender { font-size: 9px; font-weight: 700; color: #25d366; margin-bottom: 2px; }
+  .wa-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+  .wa-checkbox.checked { background: #25d366; border-color: #25d366; }
+  .wa-checkbox.checked::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+
+  /* ===== GPS ===== */
+  .route-header { text-align: center; padding: 8px 0 14px; }
+  .route-cities { font-size: 14px; font-weight: 600; }
+  .route-arrow { color: #4285f4; margin: 0 6px; }
+  .route-cargo { font-size: 11px; opacity: 0.4; margin-top: 4px; }
+
+  /* ===== MAP ===== */
+  #map-canvas {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 8px;
+    cursor: crosshair;
+  }
+  .map-info {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.7);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    border-left: 3px solid #4285f4;
+  }
+  .map-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .map-info-row:last-child { margin-bottom: 0; }
+
+  /* ===== FUEL ===== */
+  .fuel-gauge { position: relative; height: 14px; background: rgba(255,255,255,0.08); border-radius: 7px; overflow: hidden; margin: 8px 0 4px; }
+  .fuel-fill { height: 100%; border-radius: 7px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s; background: linear-gradient(90deg, #ff8c00, #ffab00); box-shadow: 0 0 10px rgba(255,171,0,0.3); }
+  .fuel-fill.low { background: linear-gradient(90deg, #ff3b30, #ff6b6b); box-shadow: 0 0 10px rgba(255,59,48,0.3); }
+  .fuel-text { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+
+  /* ===== NOTAS APP — DACTE CT-e ===== */
+  .dacte {
+    background: #fafafa;
+    border: 1.5px solid #222;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    font-size: 8px;
+    line-height: 1.35;
+    color: #111;
+    position: relative;
+    overflow: hidden;
+  }
+  .dacte * { color: #111; }
+  .dacte-header {
+    display: flex;
+    border-bottom: 1.5px solid #222;
+  }
+  .dacte-header-left {
+    flex: 1;
+    padding: 5px 6px;
+    border-right: 1px solid #333;
+  }
+  .dacte-header-right {
+    width: 55px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 5px;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 1px;
+    background: #f0f0f0;
+  }
+  .dacte-modal-label {
+    font-size: 6px;
+    font-weight: 400;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1px;
+  }
+  .dacte-title {
+    font-weight: 800;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .dacte-subtitle {
+    font-size: 6.5px;
+    opacity: 0.5;
+    margin-top: 1px;
+  }
+  .dacte-doc-num {
+    font-size: 7px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .dacte-barcode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 6px;
+    border-bottom: 1px solid #333;
+    background: #fff;
+    gap: 2px;
+    height: 18px;
+    overflow: hidden;
+  }
+  .dacte-barcode-bar {
+    width: 1px;
+    background: #000;
+    height: 100%;
+  }
+  .dacte-key {
+    font-size: 5.5px;
+    text-align: center;
+    padding: 2px 4px;
+    opacity: 0.5;
+    border-bottom: 1px solid #333;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.3px;
+    word-break: break-all;
+  }
+  .dacte-section {
+    border-bottom: 1px solid #333;
+    padding: 0;
+  }
+  .dacte-section:last-child { border-bottom: none; }
+  .dacte-section-title {
+    background: #e8e8e8;
+    font-weight: 700;
+    font-size: 6.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 6px;
+    border-bottom: 1px solid #ccc;
+  }
+  .dacte-grid {
+    display: grid;
+    gap: 0;
+  }
+  .dacte-grid-2 { grid-template-columns: 1fr 1fr; }
+  .dacte-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .dacte-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .dacte-cell {
+    padding: 2px 5px 3px;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #eee;
+    min-height: 18px;
+  }
+  .dacte-cell:last-child { border-right: none; }
+  .dacte-cell-label {
+    font-size: 5.5px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    letter-spacing: 0.3px;
+    margin-bottom: 1px;
+  }
+  .dacte-cell-value {
+    font-size: 7.5px;
+    font-weight: 600;
+    word-break: break-word;
+  }
+  .dacte-cell-value.big {
+    font-size: 9px;
+    font-weight: 800;
+  }
+  .dacte-cell-value.green { color: #0a7a2e; }
+  .dacte-cell-value.red { color: #c0392b; }
+  .dacte-cell-value.mono {
+    font-family: 'Courier New', monospace;
+    font-size: 7px;
+  }
+  .dacte-footer {
+    background: #f5f5f5;
+    border-top: 1.5px solid #222;
+    padding: 4px 6px;
+    text-align: center;
+  }
+  .dacte-stamp {
+    font-size: 7px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 0;
+  }
+  .dacte-stamp.approved { color: #0a7a2e; border: 1.5px solid #0a7a2e; border-radius: 2px; display: inline-block; padding: 2px 8px; }
+  .dacte-stamp.deficit { color: #c0392b; border: 1.5px solid #c0392b; border-radius: 2px; display: inline-block; padding: 2px 8px; }
+  .dacte-obs {
+    font-size: 6px;
+    opacity: 0.4;
+    margin-top: 3px;
+    font-style: italic;
+  }
+  .dacte-gastos-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1px 5px;
+    font-size: 7px;
+  }
+  .dacte-gastos-row .g-motivo { opacity: 0.6; }
+  .dacte-gastos-row .g-valor { font-weight: 600; color: #c0392b; }
+
+  .nf-list-item {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .nf-list-item:active { background: rgba(255,255,255,0.08); transform: scale(0.97); }
+  .nf-list-left { display: flex; align-items: center; gap: 8px; }
+  .nf-list-icon { font-size: 16px; }
+  .nf-list-info { min-width: 0; }
+  .nf-list-title { font-size: 11px; font-weight: 600; }
+  .nf-list-sub { font-size: 9px; opacity: 0.4; }
+  .nf-list-valor { font-size: 12px; font-weight: 700; }
+  .nf-list-valor.positivo { color: #00ff88; }
+  .nf-list-valor.negativo { color: #ff3b30; }
+
+  /* ===== YOUTUBE APP ===== */
+  .yt-search-wrap {
+    display: flex; gap: 6px; margin-bottom: 10px;
+  }
+  .yt-input {
+    flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 8px 10px; font-size: 11px; color: white;
+    outline: none; font-family: inherit;
+  }
+  .yt-input::placeholder { color: rgba(255,255,255,0.3); }
+  .yt-input:focus { border-color: rgba(255,0,0,0.5); }
+  
+  /* Select/Dropdown styling */
+  select {
+    background-color: rgba(255,255,255,0.08) !important;
+    color: white !important;
+  }
+  select option {
+    background-color: #1a1a1e !important;
+    color: white !important;
+    padding: 8px !important;
+  }
+  select option:hover {
+    background-color: rgba(66, 133, 244, 0.3) !important;
+  }
+  select option:checked {
+    background: linear-gradient(#4285f4, #4285f4) !important;
+    background-color: #4285f4 !important;
+  }
+  
+  .yt-btn {
+    background: #ff0000; border: none; border-radius: 10px; padding: 0 12px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .yt-btn:hover { background: #cc0000; }
+  .yt-btn:active { background: #aa0000; }
+  .yt-player-wrap {
+    position: relative; width: 100%; padding-bottom: 56.25%; /* 16:9 */
+    background: #111; border-radius: 12px; overflow: hidden; margin-bottom: 10px;
+  }
+  .yt-player-wrap iframe, .yt-player-wrap webview {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+  }
+  .yt-placeholder {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; opacity: 0.3;
+  }
+  .yt-placeholder svg { opacity: 0.5; }
+  .yt-placeholder span { font-size: 10px; }
+  .yt-history-title {
+    font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .yt-history-item {
+    background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px 10px;
+    margin-bottom: 4px; cursor: pointer; transition: background 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .yt-history-item:active { background: rgba(255,255,255,0.08); }
+  .yt-history-thumb {
+    width: 48px; height: 28px; border-radius: 4px; background: #222;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .yt-history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .yt-history-text { font-size: 10px; line-height: 1.3; overflow: hidden;
+    line-clamp: 2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .yt-now-playing {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+    padding: 6px 8px; background: rgba(255,0,0,0.1); border-radius: 8px;
+    border: 1px solid rgba(255,0,0,0.2);
+  }
+  .yt-now-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #ff0000;
+    animation: ytPulse 1.5s infinite;
+  }
+  @keyframes ytPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .yt-now-text { font-size: 10px; opacity: 0.7; flex: 1; overflow: hidden;
+    white-space: nowrap; text-overflow: ellipsis; }
+
+  .resumo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .resumo-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: transform 0.2s;
+  }
+  .resumo-card:active { transform: scale(0.96); }
+  .resumo-valor { font-size: 16px; font-weight: 700; }
+  .resumo-label { font-size: 9px; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* Bank styles */
+  .bank-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0d1926 100%);
+    border-radius: 16px; padding: 20px; margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,0.08); position: relative; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .bank-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+  .bank-card::after { content: ''; position: absolute; top: -30%; right: -20%; width: 120px; height: 120px; background: radial-gradient(circle, rgba(0,200,83,0.1) 0%, transparent 70%); border-radius: 50%; }
+  .bank-card-label { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+  .bank-card-balance { font-size: 26px; font-weight: 800; color: #00ff88; margin: 8px 0 4px; text-shadow: 0 0 20px rgba(0,255,136,0.3); }
+  .bank-card-name { font-size: 10px; opacity: 0.35; letter-spacing: 1px; }
+  .bank-section-title { font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding: 0 2px; }
+  .bank-tx { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.04); border-radius: 10px; margin-bottom: 4px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+  .bank-tx:active { transform: scale(0.97); background: rgba(255,255,255,0.07); }
+  .bank-tx-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .bank-tx-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .bank-tx-icon.deposit { background: rgba(0,200,83,0.12); }
+  .bank-tx-icon.withdraw { background: rgba(255,59,48,0.12); }
+  .bank-tx-info { min-width: 0; }
+  .bank-tx-title { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bank-tx-sub { font-size: 9px; opacity: 0.35; }
+  .bank-tx-amount { font-size: 12px; font-weight: 700; text-align: right; white-space: nowrap; margin-left: 8px; }
+  .bank-tx-amount.positive { color: #00ff88; }
+  .bank-tx-amount.negative { color: #ff3b30; }
+
+  /* Nota detail view */
+  #nota-detail { display: none; }
+  #nota-detail.active { display: flex; }
+  .detail-scroll { flex: 1; padding: 0 12px 12px; overflow-y: auto; scrollbar-width: none; }
+  .detail-scroll::-webkit-scrollbar { display: none; }
+
+  /* ===== DASHBOARD ===== */
+  .dash-speed { text-align: center; padding: 12px 0; }
+  .dash-speed-num { font-size: 56px; font-weight: 200; line-height: 1; letter-spacing: -3px; text-shadow: 0 0 30px currentColor; transition: color 0.3s; }
+  .dash-speed-unit { font-size: 11px; opacity: 0.4; letter-spacing: 2px; }
+  .rpm-bar-container { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin: 6px 0 2px; }
+  .rpm-bar { height: 100%; border-radius: 3px; transition: width 0.2s; background: linear-gradient(90deg, #00ff88, #ffcc00, #ff3b30); box-shadow: 0 0 8px rgba(0,255,136,0.2); }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: absolute; top: 0; left: 6px; right: 6px;
+    background: rgba(40,40,40,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-radius: 14px; padding: 10px 12px; font-size: 12px; z-index: 200;
+    transform: translateY(-100%) scale(0.95); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s;
+    border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    opacity: 0;
+  }
+  #toast.show { transform: translateY(6px) scale(1); opacity: 1; }
+  .toast-icon { font-size: 18px; flex-shrink: 0; }
+  .toast-text { flex: 1; }
+  .toast-title { font-size: 10px; opacity: 0.5; font-weight: 600; }
+
+  /* ===== HOME BAR ===== */
+  #home-bar {
+    height: 24px; display: flex; justify-content: center; align-items: center;
+    flex-shrink: 0; cursor: pointer; background: #000;
+  }
+  #home-indicator { width: 90px; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; transition: background 0.15s; }
+  #home-bar:hover #home-indicator { background: rgba(255,255,255,0.5); }
+
+  .disconnected { text-align: center; padding: 30px 16px; opacity: 0.3; font-size: 11px; }
+  .disconnected-icon { margin-bottom: 8px; display: flex; justify-content: center; }
+  .text-green { color: #00ff88; }
+  .text-red { color: #ff3b30; }
+  .text-blue { color: #4285f4; }
+  .text-orange { color: #ff8c00; }
+
+  /* ===== INTERACT MODE ===== */
+  #interact-badge {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,122,255,0.9);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    z-index: 300;
+    display: none;
+    pointer-events: none;
+    animation: badgePulse 2s infinite;
+  }
+  #interact-badge.visible { display: block; }
+  @keyframes badgePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* ===== MINI NOTIFICAÇÃO (fora do celular) ===== */
+  #mini-notif {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #2c2c2e;
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 99999;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    transform: translateY(-130%);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s 0.1s;
+    pointer-events: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  #mini-notif.show {
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+  }
+  .mn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #0a84ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .mn-text { flex: 1; }
+  .mn-title {
+    font-size: 10px;
+    opacity: 0.5;
+    font-weight: 600;
+  }
+  .mn-msg {
+    font-size: 12px;
+    color: #fff;
+    margin-top: 1px;
+  }
+  .mn-time {
+    font-size: 10px;
+    opacity: 0.35;
+    margin-top: 2px;
+  }
+
+  #phone.interact-active {
+    border-color: rgba(0,122,255,0.5);
+    box-shadow: 0 0 0 1px rgba(0,122,255,0.3), 0 8px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0,122,255,0.15);
+  }
+
+  /* ===== TOGGLE BUTTON ===== */
+  #toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(30,30,30,0.9);
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 100;
+    transition: transform 0.15s, background 0.15s;
+  }
+  #toggle-btn:hover { background: rgba(50,50,50,0.95); transform: scale(1.1); }
+  #toggle-btn:active { transform: scale(0.95); }
+  #toggle-btn.visible { display: flex; }
+
+  /* Phone hide/show animation */
+  #phone.hiding {
+    animation: phoneOut 0.3s ease forwards;
+  }
+  #phone.showing {
+    animation: phoneIn 0.3s ease forwards;
+  }
+  #phone.hidden { display: none; }
+  #phone.hidden-by-focus { display: none; }
+
+  #toggle-btn.visible { display: flex; }
+  #toggle-btn.hidden-by-focus { display: none !important; }
+
+  @keyframes phoneOut {
+    from { opacity: 1; transform: scale(1) translateY(0); }
+    to { opacity: 0; transform: scale(0.85) translateY(20px); }
+  }
+  @keyframes phoneIn {
+    from { opacity: 0; transform: scale(0.85) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* ===== LOGIN SCREEN ===== */
+  #login-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+    gap: 8px;
+    padding: 10px 20px;
+    overflow: hidden;
+  }
+  #login-screen.hidden { display: none; }
+  #login-screen:not(.hidden) ~ .page { display: none !important; }
+  .login-avatar {
+    font-size: 60px; font-weight: 200; letter-spacing: -2px;
+    color: #ffffff; margin-bottom: 4px; margin-top: 10px;
+  }
+  .login-title { font-size: 14px; font-weight: 600; opacity: 0.9; }
+  .login-sub { font-size: 10px; opacity: 0.4; margin-bottom: 8px; }
+  .login-input {
+    width: 100%; max-width: 170px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 10px 12px; font-size: 12px; color: white;
+    outline: none; font-family: inherit; text-align: center;
+  }
+  .login-input::placeholder { color: rgba(255,255,255,0.3); }
+  .login-input:focus { border-color: rgba(0, 255, 136, 0.4); box-shadow: 0 0 12px rgba(0,255,136,0.1); }
+  .login-pin-dots {
+    display: flex; gap: 8px; margin: 4px 0;
+  }
+  .pin-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .pin-dot.filled { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 8px rgba(0,255,136,0.4); transform: scale(1.15); }
+  .login-numpad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    width: 100%; max-width: 160px; margin-top: 2px;
+  }
+  .numpad-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 6px 0; font-size: 14px; font-weight: 500;
+    color: white; cursor: pointer; text-align: center; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+  }
+  .numpad-btn:active { background: rgba(255,255,255,0.15); transform: scale(0.9); }
+  .numpad-btn.fn { font-size: 11px; opacity: 0.5; }
+  .numpad-btn.fn:hover { opacity: 0.8; }
+  .login-error {
+    font-size: 10px; color: #ff3b30; min-height: 14px; text-align: center;
+  }
+  .login-toggle {
+    font-size: 10px; opacity: 0.4; cursor: pointer; margin-top: 4px;
+  }
+  .login-toggle:hover { opacity: 0.7; }
+
+  /* ===== GAME NOT RUNNING OVERLAY ===== */
+  #game-not-running {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+    gap: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  #game-not-running.visible { display: flex; }
+  #game-not-running .gnr-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 59, 48, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    animation: gnrPulse 2s ease-in-out infinite;
+  }
+  @keyframes gnrPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.3); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+  }
+  #game-not-running .gnr-title {
+    font-size: 13px; font-weight: 700; color: #ff3b30;
+  }
+  #game-not-running .gnr-msg {
+    font-size: 10px; opacity: 0.5; line-height: 1.5; max-width: 170px;
+  }
+  #game-not-running .gnr-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255, 59, 48, 0.5);
+    animation: gnrDot 1.5s ease-in-out infinite;
+  }
+  @keyframes gnrDot {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div id="interact-badge">F9 — MODO CELULAR</div>
+<div id="toggle-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg></div>
+
+<!-- Mini-notificação (aparece mesmo com F8/celular minimizado) -->
+<div id="mini-notif">
+  <div class="mn-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+  </div>
+  <div class="mn-text">
+    <div class="mn-title">Notificação</div>
+    <div class="mn-msg" id="mini-notif-msg"></div>
+    <div class="mn-time" id="mini-notif-time"></div>
+  </div>
+</div>
+
+<div id="phone">
+  <div id="notch-area"><div id="notch"></div></div>
+
+  <div id="statusbar">
+    <div class="sb-left">
+      <span id="sb-time">--:--</span>
+    </div>
+    <div class="sb-center"></div>
+    <div class="sb-right">
+      <div class="signal-bars">
+        <div class="signal-bar"></div><div class="signal-bar"></div>
+        <div class="signal-bar"></div><div class="signal-bar"></div>
+      </div>
+      <span style="font-size:10px;opacity:0.7">TIM</span>
+      <span id="sb-fuel-pct">--%</span>
+      <div class="battery"><div class="battery-fill" id="sb-battery-fill"></div></div>
+    </div>
+  </div>
+
+  <div id="screen">
+    <img id="wallpaper-bg" alt="wallpaper">
+    <div id="wallpaper-overlay"></div>
+
+    <!-- GAME NOT RUNNING WARNING -->
+    <div id="game-not-running">
+      <div class="gnr-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#ff3b30"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      </div>
+      <div class="gnr-title">Jogo não detectado</div>
+      <div class="gnr-msg">Abra o Euro Truck Simulator 2 para usar o celular</div>
+      <div class="gnr-dot"></div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+      <div class="login-avatar" id="login-time">--:--</div>
+      <div class="login-sub" id="login-date" style="margin-top:-6px;margin-bottom:2px;font-size:11px;opacity:0.5;"></div>
+      <div class="login-title" id="login-title">Entrar</div>
+      <div class="login-sub" id="login-sub">Digite seu usuário e PIN</div>
+      <input type="text" class="login-input" id="login-user" placeholder="Usuário" maxlength="20" autocomplete="off">
+      <div class="login-pin-dots" id="pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="login-numpad" id="login-numpad">
+        <div class="numpad-btn" data-num="1">1</div>
+        <div class="numpad-btn" data-num="2">2</div>
+        <div class="numpad-btn" data-num="3">3</div>
+        <div class="numpad-btn" data-num="4">4</div>
+        <div class="numpad-btn" data-num="5">5</div>
+        <div class="numpad-btn" data-num="6">6</div>
+        <div class="numpad-btn" data-num="7">7</div>
+        <div class="numpad-btn" data-num="8">8</div>
+        <div class="numpad-btn" data-num="9">9</div>
+        <div class="numpad-btn" style="visibility:hidden"></div>
+        <div class="numpad-btn" data-num="0">0</div>
+        <div class="numpad-btn fn" id="login-backspace">⌫</div>
+      </div>
+      <div class="login-error" id="login-error"></div>
+    </div>
+
+    <div id="toast">
+      <div class="toast-icon" id="toast-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></div>
+      <div class="toast-text">
+        <div class="toast-title">Sweet PJ</div>
+        <div id="toast-msg">Mensagem</div>
+      </div>
+    </div>
+    <div id="power-off-screen">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M13 3h-2v10h2V3zm4.95 3.05l-1.41 1.41A6.99 6.99 0 0 1 12 19a6.99 6.99 0 0 1-4.54-1.54L6.05 6.05 4.64 7.46A8.99 8.99 0 0 0 12 21c4.97 0 9-4.03 9-9 0-2.34-.91-4.47-2.38-6.04z"/></svg>
+      <span>Celular desligado</span>
+    </div>
+
+    <!-- HOME -->
+    <div id="home" class="page active">
+      <div class="home-widget">
+        <div class="widget-time" id="home-time">--:--</div>
+        <div class="widget-date" id="home-date"></div>
+      </div>
+      <div class="app-grid">
+        <div class="app-icon" data-app="messages">
+          <div class="icon-circle ic-messages"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg><div class="badge" id="msg-badge">0</div></div>
+          <div class="app-label">WhatsApp</div>
+        </div>
+        <div class="app-icon" data-app="gps">
+          <div class="icon-circle ic-gps"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg></div>
+          <div class="app-label">Maps</div>
+        </div>
+        <div class="app-icon" data-app="fuel">
+          <div class="icon-circle ic-fuel"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 0 0 2.5 2.5c.36 0 .69-.08 1-.21V17a1 1 0 1 1-2 0v-2c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5V17a2.5 2.5 0 1 0 5 0V9c0-.69-.28-1.32-.73-1.77zM12 10H6V5h6v5z"/></svg></div>
+          <div class="app-label">Combustível</div>
+        </div>
+        <div class="app-icon" data-app="dash">
+          <div class="icon-circle ic-dash"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44z"/><path d="M10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg></div>
+          <div class="app-label">Painel</div>
+        </div>
+        <div class="app-icon" data-app="notas">
+          <div class="icon-circle ic-notas"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>
+          <div class="app-label">Notas</div>
+        </div>
+        <div class="app-icon" data-app="banco">
+          <div class="icon-circle ic-banco"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-3.5-9L2 6v2h19V6l-10.5-5z"/></svg></div>
+          <div class="app-label">Nubank</div>
+        </div>
+        <div class="app-icon" data-app="yt">
+          <div class="icon-circle ic-yt"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15.5v-7l6 3.5-6 3.5z"/></svg></div>
+          <div class="app-label">YouTube</div>
+        </div>
+        <div class="app-icon" data-app="notificacoes">
+          <div class="icon-circle ic-notif"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><div class="badge" id="notif-badge">0</div></div>
+          <div class="app-label">Avisos</div>
+        </div>
+        <div class="app-icon" data-app="config">
+          <div class="icon-circle ic-config"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.62l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.48.04.62l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.62l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.48-.04-.62l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></div>
+          <div class="app-label">Ajustes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICAÇÕES -->
+    <div id="app-notificacoes" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg> Notificações</div>
+      </div>
+      <div class="app-body">
+        <div class="empty-state" id="msg-empty">Nenhuma notificação</div>
+        <div id="msg-list"></div>
+      </div>
+    </div>
+
+    <!-- WHATSAPP -->
+    <div id="app-messages" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</div>
+        <div id="wa-profile-btn" style="margin-left:auto;cursor:pointer;padding:4px;" title="Perfil">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white" opacity="0.6"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+      </div>
+      <div class="wa-tabs">
+        <div class="wa-tab active" id="wa-tab-convos">Conversas</div>
+        <div class="wa-tab" id="wa-tab-groups">Grupos</div>
+      </div>
+      <!-- Aba Conversas -->
+      <div class="app-body" id="wa-convos-panel" style="position:relative;">
+        <div class="empty-state" id="wa-convos-empty">Nenhuma conversa</div>
+        <div id="wa-convos-list"></div>
+        <button class="wa-new-btn" id="wa-new-chat-btn" title="Nova conversa">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 11h-4v4h-2v-4H9v-2h4V7h2v4h4v2z"/></svg>
+        </button>
+      </div>
+      <!-- Aba Grupos -->
+      <div class="app-body" id="wa-groups-panel" style="display:none;position:relative;">
+        <div class="empty-state" id="wa-groups-empty">Nenhum grupo</div>
+        <div id="wa-groups-list"></div>
+        <button class="wa-new-btn" id="wa-new-group-btn" title="Criar grupo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- WHATSAPP CHAT VIEW -->
+    <div id="app-wa-chat" class="page">
+      <div class="wa-chat-header">
+        <div class="back-btn" id="wa-chat-back">‹</div>
+        <div class="wa-avatar wa-chat-avatar" id="wa-chat-avatar"></div>
+        <div>
+          <div class="wa-chat-name" id="wa-chat-name">...</div>
+          <div class="wa-chat-status" id="wa-chat-status">online</div>
+        </div>
+      </div>
+      <div class="wa-chat-messages" id="wa-chat-msgs"></div>
+      <div class="wa-input-bar">
+        <input type="text" class="wa-input" id="wa-chat-input" placeholder="Mensagem" maxlength="500" autocomplete="off">
+        <button class="wa-send-btn" id="wa-chat-send">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- NEW CHAT (contacts only) -->
+    <div id="app-wa-new" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" id="wa-new-back">‹</div>
+        <div class="app-title">Nova conversa</div>
+      </div>
+      <div class="app-body">
+        <div id="wa-contacts-list" class="wa-user-list"></div>
+        <div class="empty-state" id="wa-contacts-empty" style="display:none;">Nenhum contato</div>
+      </div>
+    </div>
+
+    <!-- ADD CONTACT (search) -->
+    <div id="app-wa-add-contact" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" id="wa-add-contact-back">‹</div>
+        <div class="app-title">Adicionar Contato</div>
+      </div>
+      <div class="app-body">
+        <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px;margin-bottom:12px;">
+          <input type="text" id="wa-search-user" placeholder="Buscar por telefone... ex: (11) 9" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:white;font-size:12px;outline:none;">
+        </div>
+        <div id="wa-search-results" class="wa-user-list"></div>
+      </div>
+    </div>
+
+    <!-- MANAGE CONTACTS (list with delete) -->
+    <div id="app-wa-manage-contacts" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" id="wa-manage-back">‹</div>
+        <div class="app-title">Meus Contatos</div>
+        <div id="wa-add-new-contact-btn" style="margin-left:auto;cursor:pointer;padding:4px;" title="Adicionar contato">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+      </div>
+      <div class="app-body">
+        <div id="wa-my-contacts-list" class="wa-user-list"></div>
+        <div class="empty-state" id="wa-my-contacts-empty" style="display:none;">Nenhum contato</div>
+      </div>
+    </div>
+
+    <!-- PROFILE SETTINGS -->
+    <div id="app-wa-profile" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" id="wa-profile-back">‹</div>
+        <div class="app-title">Perfil</div>
+      </div>
+      <div class="app-body" style="text-align:center;">
+        <div id="wa-my-avatar" class="wa-avatar" style="width:64px;height:64px;font-size:24px;margin:16px auto 8px;cursor:pointer;position:relative;">
+          <div style="position:absolute;bottom:-2px;right:-2px;background:#25d366;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+        </div>
+        <div id="wa-my-name" style="font-size:14px;font-weight:700;margin-bottom:4px;"></div>
+        <div id="wa-my-phone" style="font-size:11px;opacity:0.5;margin-bottom:16px;"></div>
+        <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px;text-align:left;">
+          <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">URL da foto de perfil</div>
+          <input type="text" id="wa-avatar-input" placeholder="https://..." style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:white;font-size:12px;outline:none;margin-bottom:10px;">
+          <button id="wa-save-profile" style="width:100%;background:#25d366;border:none;border-radius:10px;padding:10px;color:white;font-size:12px;font-weight:700;cursor:pointer;">Salvar foto</button>
+          <div id="wa-avatar-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none;"></div>
+        </div>
+        <div style="margin-top:14px;">
+          <button id="wa-manage-contacts-btn" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:white;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            Gerenciar Contatos
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE GROUP -->
+    <div id="app-wa-create-group" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" id="wa-create-group-back">‹</div>
+        <div class="app-title">Criar Grupo</div>
+      </div>
+      <div class="app-body">
+        <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px;margin-bottom:12px;">
+          <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Nome do grupo</div>
+          <input type="text" id="wa-group-name" placeholder="Nome do grupo" maxlength="30" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:white;font-size:12px;outline:none;">
+        </div>
+        <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 4px;">Selecionar membros (contatos)</div>
+        <div id="wa-group-contacts" class="wa-user-list" style="margin-bottom:12px;"></div>
+        <button id="wa-create-group-confirm" style="width:100%;background:#25d366;border:none;border-radius:12px;padding:12px;color:white;font-size:13px;font-weight:700;cursor:pointer;">Criar Grupo</button>
+        <div id="wa-group-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none;"></div>
+      </div>
+    </div>
+
+    <!-- GROUP CHAT VIEW -->
+    <div id="app-wa-group-chat" class="page">
+      <div class="wa-chat-header">
+        <div class="back-btn" id="wa-group-chat-back">‹</div>
+        <div class="wa-avatar wa-chat-avatar" id="wa-group-chat-avatar" style="background:linear-gradient(135deg,#128c7e,#075e54);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </div>
+        <div>
+          <div class="wa-chat-name" id="wa-group-chat-name">...</div>
+          <div class="wa-chat-status" id="wa-group-chat-members" style="font-size:9px;opacity:0.4;">membros</div>
+        </div>
+      </div>
+      <div class="wa-chat-messages" id="wa-group-chat-msgs"></div>
+      <div class="wa-input-bar">
+        <input type="text" class="wa-input" id="wa-group-chat-input" placeholder="Mensagem" maxlength="500" autocomplete="off">
+        <button class="wa-send-btn" id="wa-group-chat-send">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- GPS -->
+    <div id="app-gps" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg> GPS</div>
+      </div>
+      <div class="app-body">
+        <div id="gps-connected">
+          <div class="route-header">
+            <div class="route-cities">
+              <span id="gps-src">---</span>
+              <span class="route-arrow">→</span>
+              <span id="gps-dst">---</span>
+            </div>
+            <div class="route-cargo" id="gps-cargo">Sem carga</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M21 6H3v2h18V6zm-3-4H6v2h12V0zm3 8H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2z"/></svg> Distância restante</div>
+            <div class="card-value text-blue" id="gps-distance">-- km</div>
+            <div class="card-sub" id="gps-planned"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg> Tempo estimado</div>
+            <div class="card-value" id="gps-eta">--</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><circle cx="12" cy="5" r="4"/><rect x="10" y="9" width="4" height="4" rx="1"/><circle cx="12" cy="17" r="4"/></svg> Limite de velocidade</div>
+            <div class="card-value" id="gps-speedlimit">-- km/h</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M20 2H4c-1 0-2 .9-2 2v3c0 .7.4 1.3 1 1.7V20c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8.7c.6-.3 1-1 1-1.7V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z"/></svg> Dano da carga</div>
+            <div class="card-value" id="gps-cargo-dmg">0%</div>
+          </div>
+        </div>
+        <div class="disconnected" id="gps-disconnected" style="display:none">
+          <div class="disconnected-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="white" opacity="0.3"><path d="M12 11c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6-2c0-3.31-2.69-6-6-6S6 5.69 6 9c0 2.97 2.16 5.44 5 5.92V21h2v-6.08c2.84-.48 5-2.95 5-5.92zm-6 4c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg></div>Aguardando conexão...
+        </div>
+      </div>
+    </div>
+
+    <!-- FUEL -->
+    <div id="app-fuel" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 0 0 2.5 2.5c.36 0 .69-.08 1-.21V17a1 1 0 1 1-2 0v-2c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5V17a2.5 2.5 0 1 0 5 0V9c0-.69-.28-1.32-.73-1.77zM12 10H6V5h6v5z"/></svg> Combustível</div>
+      </div>
+      <div class="app-body">
+        <div id="fuel-connected">
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 0 0 2.5 2.5c.36 0 .69-.08 1-.21V17a1 1 0 1 1-2 0v-2c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5V17a2.5 2.5 0 1 0 5 0V9c0-.69-.28-1.32-.73-1.77zM12 10H6V5h6v5z"/></svg> Tanque</div>
+            <div class="fuel-gauge"><div class="fuel-fill" id="fuel-bar"></div></div>
+            <div class="fuel-text"><span id="fuel-current">0</span> / <span id="fuel-max">0</span> L</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg> Autonomia</div>
+            <div class="card-value text-orange" id="fuel-range">-- km</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg> Consumo médio</div>
+            <div class="card-value" id="fuel-consumption">--</div>
+          </div>
+        </div>
+        <div class="disconnected" id="fuel-disconnected" style="display:none">
+          <div class="disconnected-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="white" opacity="0.3"><path d="M12 11c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6-2c0-3.31-2.69-6-6-6S6 5.69 6 9c0 2.97 2.16 5.44 5 5.92V21h2v-6.08c2.84-.48 5-2.95 5-5.92zm-6 4c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg></div>Aguardando conexão...
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="app-dash" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44z"/><path d="M10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg> Painel</div>
+      </div>
+      <div class="app-body">
+        <div id="dash-connected">
+          <div class="dash-speed">
+            <div class="dash-speed-num text-green" id="dash-speed">0</div>
+            <div class="dash-speed-unit">km/h</div>
+          </div>
+          <div class="card">
+            <div class="card-row">
+              <span class="card-row-label">Marcha</span>
+              <span class="card-row-value" id="dash-gear">N</span>
+            </div>
+            <div class="card-row">
+              <span class="card-row-label">RPM</span>
+              <span class="card-row-value" id="dash-rpm">0</span>
+            </div>
+            <div class="rpm-bar-container"><div class="rpm-bar" id="dash-rpm-bar" style="width:0%"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-row">
+              <span class="card-row-label">Cruise Control</span>
+              <span class="card-row-value" id="dash-cruise">OFF</span>
+            </div>
+            <div class="card-row">
+              <span class="card-row-label">Limite</span>
+              <span class="card-row-value" id="dash-limit">--</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-row">
+              <span class="card-row-label"><svg class="i" width="11" height="11" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg> Caminhão</span>
+              <span class="card-row-value" id="dash-truck">--</span>
+            </div>
+            <div class="card-row">
+              <span class="card-row-label"><svg class="i" width="11" height="11" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44z"/><path d="M10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg> Odômetro</span>
+              <span class="card-row-value" id="dash-odometer">-- km</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><svg class="i" width="12" height="12" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg> Desgaste</div>
+            <div class="card-row"><span class="card-row-label">Motor</span><span class="card-row-value" id="dash-wear-engine">0%</span></div>
+            <div class="card-row"><span class="card-row-label">Câmbio</span><span class="card-row-value" id="dash-wear-trans">0%</span></div>
+            <div class="card-row"><span class="card-row-label">Cabine</span><span class="card-row-value" id="dash-wear-cabin">0%</span></div>
+            <div class="card-row"><span class="card-row-label">Chassi</span><span class="card-row-value" id="dash-wear-chassis">0%</span></div>
+            <div class="card-row"><span class="card-row-label">Pneus</span><span class="card-row-value" id="dash-wear-wheels">0%</span></div>
+          </div>
+        </div>
+        <div class="disconnected" id="dash-disconnected" style="display:none">
+          <div class="disconnected-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="white" opacity="0.3"><path d="M12 11c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6-2c0-3.31-2.69-6-6-6S6 5.69 6 9c0 2.97 2.16 5.44 5 5.92V21h2v-6.08c2.84-.48 5-2.95 5-5.92zm-6 4c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg></div>Aguardando conexão...
+        </div>
+      </div>
+    </div>
+
+
+    <!-- YOUTUBE -->
+    <div id="app-yt" class="page" style="overflow:hidden;">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="#ff0000"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15.5v-7l6 3.5-6 3.5z"/></svg> YouTube</div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:2px;">
+          <div id="yt-vol-down" style="cursor:pointer;opacity:0.5;padding:4px;" title="Volume -">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05A4.48 4.48 0 0 0 18.5 12zM5 9v6h4l5 5V4L9 9H5z"/></svg>
+          </div>
+          <span id="yt-vol-text" style="font-size:9px;opacity:0.4;min-width:22px;text-align:center;">100</span>
+          <div id="yt-vol-up" style="cursor:pointer;opacity:0.5;padding:4px;" title="Volume +">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-3.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </div>
+          <div id="yt-landscape-btn" style="cursor:pointer;opacity:0.5;padding:4px;" title="Modo paisagem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div id="yt-webview-container" style="display:flex;flex:1;min-height:0;height:100%;"></div>
+      <div id="yt-exit-fs" style="display:none;position:absolute;top:6px;left:6px;z-index:100;
+        background:rgba(0,0,0,0.7);border-radius:50%;width:28px;height:28px;
+        align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,0.2);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+      </div>
+    </div>
+
+    <!-- NOTAS FISCAIS -->
+    <div id="app-notas" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg> Notas Fiscais</div>
+      </div>
+      <div class="app-body" id="notas-main">
+        <div class="resumo-grid">
+          <div class="resumo-card">
+            <div class="resumo-valor text-green" id="notas-receita">R$ 0</div>
+            <div class="resumo-label">Receita</div>
+          </div>
+          <div class="resumo-card">
+            <div class="resumo-valor text-red" id="notas-despesa">R$ 0</div>
+            <div class="resumo-label">Despesas</div>
+          </div>
+          <div class="resumo-card">
+            <div class="resumo-valor" id="notas-saldo" style="color:#00ff88">R$ 0</div>
+            <div class="resumo-label">Saldo</div>
+          </div>
+          <div class="resumo-card">
+            <div class="resumo-valor" id="notas-total">0</div>
+            <div class="resumo-label">Fretes</div>
+          </div>
+        </div>
+        <div id="notas-list">
+          <div class="empty-state" id="notas-empty">Nenhuma nota registrada</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTA DETAIL VIEW -->
+    <div id="nota-detail" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" id="nota-detail-back">‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg> CT-e Frete</div>
+      </div>
+      <div class="detail-scroll" id="nota-detail-content"></div>
+    </div>
+
+    <!-- BANCO VIRTUAL -->
+    <div id="app-banco" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg> Banco Virtual</div>
+      </div>
+      <div class="app-body">
+        <div class="bank-card">
+          <div class="bank-card-label">Saldo disponível</div>
+          <div class="bank-card-balance" id="bank-balance">R$ 0,00</div>
+          <div class="bank-card-name" id="bank-holder">Motorista</div>
+        </div>
+        <button id="bank-pix-btn" style="width:100%;background:linear-gradient(135deg,#00c853,#009624);border:none;border-radius:12px;padding:12px;color:white;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"/></svg>
+          Enviar PIX
+        </button>
+        <div class="bank-section-title">Extrato</div>
+        <div id="bank-transactions">
+          <div class="empty-state" id="bank-empty">Nenhuma movimentação</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIX -->
+    <div id="app-pix" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" id="pix-back">‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg> Enviar PIX</div>
+      </div>
+      <div class="app-body">
+        <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:16px;">
+          <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Destinatário</div>
+          <input type="text" id="pix-to" placeholder="Nome do usuário" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:white;font-size:13px;outline:none;margin-bottom:12px;">
+          <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Valor (R$)</div>
+          <input type="number" id="pix-amount" placeholder="0" min="1" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:white;font-size:13px;outline:none;margin-bottom:14px;">
+          <button id="pix-send-btn" style="width:100%;background:linear-gradient(135deg,#00c853,#009624);border:none;border-radius:12px;padding:12px;color:white;font-size:13px;font-weight:700;cursor:pointer;">Confirmar PIX</button>
+          <div id="pix-msg" style="margin-top:10px;font-size:11px;text-align:center;display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div id="app-config" class="page">
+      <div class="app-topbar">
+        <div class="back-btn" data-back>‹</div>
+        <div class="app-title"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.62l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.48.04.62l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.62l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.48-.04-.62l-2.03-1.58z"/></svg> Configurações</div>
+      </div>
+      <div class="app-body">
+        <div class="card">
+          <div class="card-title">Papel de Parede</div>
+          <input type="text" id="wallpaper-url-input" class="yt-input" placeholder="Cole a URL da imagem aqui" style="margin-bottom:8px;">
+          
+          <div style="font-size:10px;opacity:0.5;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Tamanho</div>
+          <select id="wallpaper-size" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;color:rgb(255, 255, 255);font-size:12px;margin-bottom:12px;">
+            <option value="cover">Preencher tela (padrão, sem cortar)</option>
+            <option value="contain">Ajustar na tela (com espaço branco)</option>
+            <option value="fill">Esticar completamente</option>
+          </select>
+          
+          <button id="wallpaper-apply" style="width:100%;background:linear-gradient(135deg,#4285f4,#1a73e8);border:none;border-radius:10px;padding:10px;color:white;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:8px;">Aplicar Papel de Parede</button>
+          
+          <button id="wallpaper-reset" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:white;font-size:12px;font-weight:600;cursor:pointer;">Resetar para Padrão</button>
+          
+          <div style="margin-top:12px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:9px;opacity:0.5;">
+            <strong>💡 Dica:</strong> Use imagens em URLs seguras (HTTPS). Melhor com proporção vertical (736x1307 ou similar).
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <div class="card-title">Sobre</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
+            <span style="font-size:11px;opacity:0.5;">Versão do sistema</span>
+            <span id="config-app-version" style="font-size:11px;font-weight:600;">1.0.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="home-bar"><div id="home-indicator"></div></div>
+</div>
+
+
+<script>
+
+  const { ipcRenderer } = require('electron');
+  const _fs = require('fs');
+  const _path = require('path');
+
+  // ===== LOCAL STORE (apenas token/sessão — dados ficam no servidor) =====
+  const localStore = {
+    get(key) { return localStorage.getItem(key); },
+    set(key, value) { localStorage.setItem(key, value); },
+    remove(key) { localStorage.removeItem(key); },
+  };
+  
+  // ===== LOGIN SYSTEM =====
+  const API_URL = 'http://37.148.133.228:3000';
+  const APP_VERSION = require('./package.json').version;
+  let loggedInUser = null; // { username, discord_id, token }
+
+  function userKey(key) {
+    const u = loggedInUser ? loggedInUser.username : '';
+    return u ? key + '_' + u : key;
+  }
+
+  (function initLogin() {
+    const loginScreen = document.getElementById('login-screen');
+    const loginUser = document.getElementById('login-user');
+    const pinDots = document.getElementById('pin-dots');
+    const loginError = document.getElementById('login-error');
+    const backspaceBtn = document.getElementById('login-backspace');
+
+    let pin = '';
+    // Expose pin for power-on reset
+    Object.defineProperty(window, '_loginPin', {
+      get() { return pin; },
+      set(v) { pin = v; }
+    });
+
+    // Check saved session — pre-fill username but always require PIN
+    const savedUser = localStore.get('sweet_user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        loginUser.value = user.username || '';
+      } catch(e) {}
+    }
+
+    function updateDots() {
+      const dots = pinDots.querySelectorAll('.pin-dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('filled', i < pin.length);
+      });
+    }
+
+    function setError(msg) {
+      loginError.textContent = msg;
+      setTimeout(() => { loginError.textContent = ''; }, 3000);
+    }
+
+    async function submit() {
+      const username = loginUser.value.trim();
+      if (!username) { setError('Digite seu usuário'); return; }
+      if (pin.length < 4) { setError('PIN deve ter 4 dígitos'); return; }
+
+      try {
+        let hwid = '';
+        try { hwid = await ipcRenderer.invoke('get-hwid'); } catch(e) {}
+
+        const res = await fetch(API_URL + '/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, pin, hwid })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setError(data.error || 'Erro desconhecido');
+          pin = '';
+          updateDots();
+          return;
+        }
+
+        // Login success
+        loggedInUser = {
+          username: data.user.username,
+          discord_id: data.user.discord_id || '',
+          avatar_url: data.user.avatar_url || '',
+          phone: data.user.phone || '',
+          token: data.token
+        };
+        discordUserId = data.user.discord_id || '';
+        localStore.set('sweet_user', JSON.stringify(data.user));
+        loginScreen.classList.add('hidden');
+
+        // Carregar dados do usuário após login
+        resetAndLoadNotas();
+        loadBankData();
+        startUnreadPolling();
+      } catch (err) {
+        setError('Servidor offline');
+        pin = '';
+        updateDots();
+      }
+    }
+
+    // Numpad clicks
+    document.getElementById('login-numpad').addEventListener('click', (e) => {
+      const btn = e.target.closest('.numpad-btn');
+      if (!btn) return;
+      const num = btn.dataset.num;
+      if (num !== undefined) {
+        if (pin.length < 4) {
+          pin += num;
+          updateDots();
+          if (pin.length === 4) {
+            setTimeout(submit, 200);
+          }
+        }
+      }
+    });
+
+    backspaceBtn.addEventListener('click', () => {
+      pin = pin.slice(0, -1);
+      updateDots();
+    });
+
+    // Keyboard support for PIN input
+    document.addEventListener('keydown', (e) => {
+      if (loginScreen.classList.contains('hidden')) return;
+      if (e.key >= '0' && e.key <= '9') {
+        if (pin.length < 4) {
+          pin += e.key;
+          updateDots();
+          if (pin.length === 4) {
+            setTimeout(submit, 200);
+          }
+        }
+      } else if (e.key === 'Backspace') {
+        pin = pin.slice(0, -1);
+        updateDots();
+      }
+    });
+  })();
+
+  // Discord user ID (recebido do main process)
+  let discordUserId = '';
+  ipcRenderer.on('discord-config', (event, data) => {
+    discordUserId = data.userDiscordId || '';
+  });
+
+  // Armazenar dados atuais de telemetry para usar com pedágio
+  let currentTelemetryData = {
+    citySrc: 'Nenhum',
+    cityDst: 'Nenhum',
+    routeDistance: 0,
+    cargo: 'Nenhuma'
+  };
+
+  // Variáveis extras para controle de frete (anti-duplicata)
+  let lastTelemetryData = null;
+  let _prevJobFinished = null;
+  let lastFreteTimestamp = 0;
+  
+  // Listener para event-transition
+  ipcRenderer.on('event-transition', (event, data) => {
+    
+    if (!data || !data.event || !data.type) {
+      console.warn('Dados inválidos:', data);
+      return;
+    }
+
+    // Bloquear eventos se não estiver logado
+    if (!loggedInUser) return;
+    
+    const eventNames = {
+      'jobFinished': { START: '✅ Entrega iniciada', END: '✅ Entrega finalizada' },
+      'pedagio': { START: '🚧 Pedágio Pago (Entrada)', END: '🚧 Pedágio Pago (Saida)' }
+    };
+    
+    const msgTemplate = (eventNames[data.event] && eventNames[data.event][data.type]) || data.event;
+    let finalMsg = msgTemplate;
+    
+    showNotification(data.type === 'START' ? '▶️' : '⏹️', finalMsg);
+
+    // Enviar notificação para Discord no pedágio (START e END)
+    if (data.event === 'pedagio') {
+      const t = data.telemetry || currentTelemetryData;
+
+      const tollAmount = t.tollgatePayAmount || t.ferryPayAmount || t.trainPayAmount || 0;
+      const tollBRL = (tollAmount * currencyRate).toFixed(2);
+
+      // Enviar via API diretamente
+      if (loggedInUser?.token) {
+        fetch(API_URL + '/api/discord/pedagio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+          body: JSON.stringify({
+            tipo: data.type === 'START' ? 'Entrada' : 'Saída',
+            citySrc: t.citySrc || 'Desconhecida',
+            cityDst: t.cityDst || 'Desconhecida',
+            cargo: t.cargo || '',
+            placa: t.truckLicensePlate || '',
+            placaPais: t.truckLicensePlateCountry || '',
+            valor: tollBRL,
+            motorista: loggedInUser?.username || 'Desconhecido'
+          })
+        }).catch(() => {});
+      }
+    }
+
+    // Gerar frete quando job finaliza (trigger principal via event-transition — START e END)
+    if (data.event === 'jobFinished' && (data.type === 'START' || data.type === 'END')) {
+      const t = data.telemetry || {};
+      const freteData = { ...lastTelemetryData, ...t };
+      console.log('[FRETE] event-transition jobFinished', data.type, '— chamando finalizarFrete', freteData.jobDeliveredRevenue, freteData.jobIncome);
+      finalizarFrete(freteData);
+    }
+  });
+
+  function showNotification(icon, text) {
+    const toastEl = document.getElementById('toast');
+    const toastIcon = document.getElementById('toast-icon');
+    const toastMsg = document.getElementById('toast-msg');
+    const notifBadge = document.getElementById('notif-badge');
+    const msgList = document.getElementById('msg-list');
+    const msgEmpty = document.getElementById('msg-empty');
+    const sbTime = document.getElementById('sb-time');
+    
+    if (!toastEl || !toastIcon || !toastMsg) {
+      console.warn('Elementos de notificação ainda não prontos');
+      return;
+    }
+    
+    toastIcon.textContent = icon;
+    toastMsg.textContent = text;
+    toastEl.classList.add('show');
+    clearTimeout(window.toastTimeout);
+    window.toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 3000);
+
+    // Mini-notificação quando celular está minimizado
+    if (!phoneVisible) {
+      const miniEl = document.getElementById('mini-notif');
+      const miniMsg = document.getElementById('mini-notif-msg');
+      const miniTime = document.getElementById('mini-notif-time');
+      if (miniEl && miniMsg) {
+        miniMsg.textContent = icon + '  ' + text;
+        if (miniTime) miniTime.textContent = sbTime.textContent || '--:--';
+        miniEl.classList.remove('show');
+        void miniEl.offsetWidth;
+        miniEl.classList.add('show');
+        clearTimeout(window.miniNotifTimeout);
+        window.miniNotifTimeout = setTimeout(() => miniEl.classList.remove('show'), 4000);
+      }
+    }
+
+    msgEmpty.style.display = 'none';
+    const msg = document.createElement('div');
+    msg.classList.add('msg');
+    msg.innerHTML = icon + ' ' + text + '<div class="msg-time">' + (sbTime.textContent || '--:--') + '</div>';
+    msgList.prepend(msg);
+    if (msgList.children.length > 20) msgList.removeChild(msgList.lastChild);
+
+    window.msgCount = (window.msgCount || 0) + 1;
+    notifBadge.textContent = window.msgCount;
+    notifBadge.classList.add('visible');
+    console.log('Notificação:', icon, text);
+  }
+  
+  const phone = document.getElementById('phone');
+  const statusbar = document.getElementById('statusbar');
+  const sbTime = document.getElementById('sb-time');
+  const sbFuelPct = document.getElementById('sb-fuel-pct');
+  const sbBatteryFill = document.getElementById('sb-battery-fill');
+  const homeTime = document.getElementById('home-time');
+  const loginTime = document.getElementById('login-time');
+  const loginDate = document.getElementById('login-date');
+  const homeDate = document.getElementById('home-date');
+  const msgBadge = document.getElementById('msg-badge');
+  const msgList = document.getElementById('msg-list');
+  const msgEmpty = document.getElementById('msg-empty');
+  const toastEl = document.getElementById('toast');
+  const toastIcon = document.getElementById('toast-icon');
+  const toastMsg = document.getElementById('toast-msg');
+
+  // ===== NAVIGATION =====
+  let currentPage = 'home';
+
+  function navigateTo(pageId) {
+    if (pageId === 'notificacoes') {
+      window.msgCount = 0;
+      const notifBadge = document.getElementById('notif-badge');
+      if (notifBadge) { notifBadge.textContent = '0'; notifBadge.classList.remove('visible'); }
+    }
+    if (pageId === 'messages') {
+      loadContactsCache();
+      loadConversations();
+    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById(pageId === 'home' ? 'home' : 'app-' + pageId);
+    if (page) { page.classList.add('active'); currentPage = pageId; }
+  }
+  document.querySelectorAll('.app-icon').forEach(icon => {
+    icon.addEventListener('click', () => navigateTo(icon.dataset.app));
+  });
+  document.querySelectorAll('[data-back]').forEach(btn => {
+    btn.addEventListener('click', () => navigateTo('home'));
+  });
+  document.getElementById('home-bar').addEventListener('click', () => navigateTo('home'));
+
+  // ===== DRAG =====
+  let dragging = false, offX, offY;
+  statusbar.addEventListener('mousedown', (e) => {
+    dragging = true;
+    offX = e.clientX - phone.offsetLeft;
+    offY = e.clientY - phone.offsetTop;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    phone.style.left = (e.clientX - offX) + 'px';
+    phone.style.top = (e.clientY - offY) + 'px';
+    phone.style.right = 'auto';
+  });
+  document.addEventListener('mouseup', (e) => {
+    if (dragging) {
+      dragging = false;
+      const rect = phone.getBoundingClientRect();
+      if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+        ipcRenderer.send('set-ignore-mouse', true);
+      }
+    }
+  });
+
+  // ===== MOUSE FORWARDING =====
+  phone.addEventListener('mouseenter', () => ipcRenderer.send('set-ignore-mouse', false));
+  phone.addEventListener('mouseleave', () => { if (!dragging) ipcRenderer.send('set-ignore-mouse', true); });
+
+  const toggleBtn = document.getElementById('toggle-btn');
+  toggleBtn.addEventListener('mouseenter', () => ipcRenderer.send('set-ignore-mouse', false));
+  toggleBtn.addEventListener('mouseleave', () => ipcRenderer.send('set-ignore-mouse', true));
+
+  // ===== TOGGLE PHONE =====
+  let phoneVisible = true;
+  let powerOff = false;
+
+  function hidePhone() {
+    if (powerOff) return;
+    phoneVisible = false;
+    phone.classList.remove('showing');
+    phone.classList.add('hiding');
+    toggleBtn.classList.add('visible');
+    phone.addEventListener('animationend', () => {
+      if (!phoneVisible) {
+        phone.classList.add('hidden');
+      }
+    }, { once: true });
+  }
+
+  function shutdownPhone() {
+    powerOff = true;
+    phoneVisible = true;
+    phone.classList.remove('hidden', 'hiding', 'showing');
+    phone.classList.add('powered-off');
+    toggleBtn.classList.add('visible');
+  }
+
+  document.getElementById('power-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ipcRenderer.send('power-off');
+  });
+
+  function showPhone() {
+    if (powerOff) {
+      powerOff = false;
+      phone.classList.remove('powered-off');
+      const loginScreen = document.getElementById('login-screen');
+      const loginUser = document.getElementById('login-user');
+      const pinDots = document.getElementById('pin-dots');
+      loginScreen.classList.remove('hidden');
+      const savedUser2 = localStore.get('sweet_user');
+      if (savedUser2) {
+        try {
+          const user = JSON.parse(savedUser2);
+          loginUser.value = user.username || '';
+        } catch(e) {}
+      } else if (loggedInUser) {
+        loginUser.value = loggedInUser.username || '';
+      }
+      _loginPin = '';
+      pinDots.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('filled'));
+      navigateTo('home');
+      return;
+    }
+    phoneVisible = true;
+    phone.classList.remove('hidden', 'hiding');
+    phone.classList.add('showing');
+    toggleBtn.classList.remove('visible');
+    navigateTo('home');
+    phone.addEventListener('animationend', () => {
+      phone.classList.remove('showing');
+    }, { once: true });
+  }
+
+  toggleBtn.addEventListener('click', showPhone);
+
+  // Notch area: click = hide phone, long press (1s) = power off
+  const notchArea = document.getElementById('notch-area');
+  notchArea.style.cursor = 'pointer';
+  let notchTimer = null;
+  let notchLongPressed = false;
+  notchArea.addEventListener('mousedown', () => {
+    notchLongPressed = false;
+    notchTimer = setTimeout(() => {
+      notchLongPressed = true;
+      ipcRenderer.send('power-off');
+    }, 1000);
+  });
+  notchArea.addEventListener('mouseup', () => {
+    clearTimeout(notchTimer);
+    if (!notchLongPressed) hidePhone();
+  });
+  notchArea.addEventListener('mouseleave', () => {
+    clearTimeout(notchTimer);
+  });
+
+  // ===== TOGGLE PHONE (F8) =====
+  ipcRenderer.on('toggle-phone', () => {
+    if (phoneVisible) hidePhone();
+    else showPhone();
+  });
+
+  // ===== INTERACT MODE (F9) =====
+  const interactBadge = document.getElementById('interact-badge');
+  ipcRenderer.on('interact-mode', (event, active) => {
+    if (active) {
+      phone.classList.add('interact-active');
+      interactBadge.classList.add('visible');
+    } else {
+      phone.classList.remove('interact-active');
+      interactBadge.classList.remove('visible');
+    }
+  });
+
+  // ===== GAME FOCUS DETECTOR =====
+  let gameActive = true;
+  
+  ipcRenderer.on('game-focus-changed', (event, isInFocus) => {
+    gameActive = isInFocus;
+    const phone = document.getElementById('phone');
+    const toggleBtn = document.getElementById('toggle-btn');
+    
+    if (isInFocus) {
+      phone.classList.remove('hidden-by-focus');
+      toggleBtn.classList.remove('hidden-by-focus');
+    } else {
+      phone.classList.add('hidden-by-focus');
+      toggleBtn.classList.add('hidden-by-focus');
+    }
+  });
+
+  // ===== GAME RUNNING DETECTOR =====
+  ipcRenderer.on('game-running-changed', (event, isRunning) => {
+    const gnr = document.getElementById('game-not-running');
+    if (!gnr) return;
+    if (isRunning) {
+      gnr.classList.remove('visible');
+    } else {
+      gnr.classList.add('visible');
+    }
+  });
+
+  // Check initial state immediately
+  ipcRenderer.invoke('is-game-running').then(isRunning => {
+    const gnr = document.getElementById('game-not-running');
+    if (!gnr) return;
+    if (isRunning) {
+      gnr.classList.remove('visible');
+    } else {
+      gnr.classList.add('visible');
+    }
+  });
+
+  // ===== AUTO-UPDATE NOTIFICATION =====
+  ipcRenderer.on('update-status', (event, data) => {
+    let banner = document.getElementById('update-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'update-banner';
+      banner.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(37,211,102,0.95);color:#fff;padding:10px 20px;border-radius:12px;font-size:12px;font-weight:600;z-index:999999;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.4);cursor:default;font-family:Inter,sans-serif;';
+      document.body.appendChild(banner);
+    }
+    if (data.status === 'downloading') {
+      banner.dataset.version = data.version;
+      banner.innerHTML = '⬇️ Baixando v' + data.version + ' — 0%<div style="width:100%;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:6px;"><div id="update-progress-bar" style="height:100%;width:0%;background:#fff;border-radius:2px;transition:width 0.3s;"></div></div>';
+      banner.style.cursor = 'default';
+      banner.style.flexDirection = 'column';
+      banner.onclick = null;
+    } else if (data.status === 'progress') {
+      const pct = data.percent || 0;
+      const speed = data.speed ? (data.speed / 1048576).toFixed(1) : '0';
+      const ver = banner.dataset.version || '';
+      const bar = document.getElementById('update-progress-bar');
+      if (bar) bar.style.width = pct + '%';
+      const textEl = banner.childNodes[0];
+      if (textEl) textEl.textContent = '⬇️ Baixando v' + ver + ' — ' + pct + '%  (' + speed + ' MB/s)';
+    } else if (data.status === 'ready') {
+      banner.innerHTML = '✅ Atualização v' + data.version + ' pronta — <u>Clique para instalar</u>';
+      banner.style.cursor = 'pointer';
+      banner.onclick = () => { ipcRenderer.send('install-update'); };
+    }
+  });
+
+  // ===== YOUTUBE WEBVIEW =====
+  let ytWebview = null;
+  let ytLandscape = false;
+
+  function createYtWebview() {
+    if (ytWebview) return;
+    const container = document.getElementById('yt-webview-container');
+    const webview = document.createElement('webview');
+    webview.id = 'yt-webview';
+    webview.src = 'https://m.youtube.com';
+    webview.partition = 'persist:youtube';
+    webview.useragent = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
+    webview.style.flex = '1';
+    webview.style.width = '100%';
+    webview.style.height = '100%';
+    webview.style.border = 'none';
+    webview.style.minHeight = '0';
+    container.appendChild(webview);
+    ytWebview = webview;
+
+    webview.addEventListener('dom-ready', () => {
+      webview.setZoomFactor(0.6);
+      webview.insertCSS(`
+        .smartbanner, .mweb-opt-in-banner, .ytm-autonav-bar,
+        ytm-promoted-sparkles-web-renderer, .companion-ad-renderer,
+        .ytm-app-download-banner, [class*="app-download"],
+        .c3-player-controls-row-mini, .video-ads,
+        ytm-banner-promo-renderer, .ytp-paid-content-overlay {
+          display: none !important;
+        }
+        .ytp-fullscreen-button { display: none !important; }
+        ::-webkit-scrollbar { display: none !important; }
+        * { scrollbar-width: none !important; }
+      `);
+      webview.executeJavaScript(`
+        Element.prototype.requestFullscreen = function() { return Promise.resolve(); };
+        HTMLElement.prototype.webkitRequestFullScreen = function() {};
+        HTMLElement.prototype.webkitRequestFullscreen = function() {};
+        HTMLVideoElement.prototype.webkitEnterFullScreen = function() {};
+        HTMLVideoElement.prototype.webkitEnterFullscreen = function() {};
+        document.fullscreenEnabled = false;
+        document.webkitFullscreenEnabled = false;
+        Object.defineProperty(document, 'fullscreenElement', { get: () => null });
+        Object.defineProperty(document, 'webkitFullscreenElement', { get: () => null });
+      `).catch(() => {});
+    });
+  }
+
+  function ytToggleLandscape() {
+    ytLandscape = !ytLandscape;
+    if (ytLandscape) {
+      phone.classList.add('yt-landscape');
+      document.getElementById('notch-area').style.display = 'none';
+      document.getElementById('statusbar').style.display = 'none';
+      document.getElementById('home-bar').style.display = 'none';
+      document.querySelector('#app-yt .app-topbar').style.display = 'none';
+      document.getElementById('yt-exit-fs').style.display = 'flex';
+    } else {
+      phone.classList.remove('yt-landscape');
+      document.getElementById('notch-area').style.display = '';
+      document.getElementById('statusbar').style.display = '';
+      document.getElementById('home-bar').style.display = '';
+      document.querySelector('#app-yt .app-topbar').style.display = '';
+      document.getElementById('yt-exit-fs').style.display = 'none';
+    }
+  }
+
+  document.getElementById('yt-exit-fs').addEventListener('click', () => ytToggleLandscape());
+  document.getElementById('yt-landscape-btn').addEventListener('click', () => ytToggleLandscape());
+
+  let ytVolume = 100;
+  const ytVolText = document.getElementById('yt-vol-text');
+  function ytSetVolume(vol) {
+    ytVolume = Math.max(0, Math.min(100, vol));
+    ytVolText.textContent = ytVolume;
+    if (ytWebview) {
+      ytWebview.executeJavaScript(`
+        (function(){
+          var v = document.querySelector('video');
+          if(v) v.volume = ${ytVolume / 100};
+        })();
+      `).catch(()=>{});
+    }
+  }
+  document.getElementById('yt-vol-down').addEventListener('click', () => ytSetVolume(ytVolume - 10));
+  document.getElementById('yt-vol-up').addEventListener('click', () => ytSetVolume(ytVolume + 10));
+
+  // Override navigateTo for YT landscape
+  const origNavigateTo = navigateTo;
+  navigateTo = function(pageId) {
+    if (ytLandscape) ytToggleLandscape();
+    if (pageId === 'yt') createYtWebview();
+    if (pageId === 'banco') loadBankData();
+    origNavigateTo(pageId);
+  };
+
+  // ===== NOTAS FISCAIS =====
+  const notasList = document.getElementById('notas-list');
+  const notasEmpty = document.getElementById('notas-empty');
+  const notasReceita = document.getElementById('notas-receita');
+  const notasDespesa = document.getElementById('notas-despesa');
+  const notasSaldo = document.getElementById('notas-saldo');
+  const notasTotal = document.getElementById('notas-total');
+  const notaDetail = document.getElementById('nota-detail');
+  const notaDetailContent = document.getElementById('nota-detail-content');
+  const notasMain = document.getElementById('notas-main');
+
+  document.getElementById('nota-detail-back').addEventListener('click', () => {
+    notaDetail.classList.remove('active');
+    document.getElementById('app-notas').classList.add('active');
+  });
+
+  let totalReceita = 0;
+  let totalDespesa = 0;
+  let freteCount = 0;
+  let despesasViagem = [];
+  let notas = [];
+  let currentJob = {};
+
+  let prevEvents = { 
+    jobFinished: 0, 
+    tollgate: 0, 
+    ferry: 0, 
+    train: 0,
+    lowFuelAlertTriggered: false,
+    wearAlertTriggered: false,
+    speedingAlertTriggered: false,
+  };
+  let telemetryInitialized = false;
+
+  // ===== CLOUD SYNC HELPERS =====
+  function cloudSave(key, value) {
+    if (!loggedInUser?.token) return;
+    fetch(API_URL + '/api/userdata/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+      body: JSON.stringify({ key, value })
+    }).catch(() => {});
+  }
+
+  function cloudDelete(key) {
+    if (!loggedInUser?.token) return;
+    fetch(API_URL + '/api/userdata/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+      body: JSON.stringify({ key })
+    }).catch(() => {});
+  }
+
+  // cloudLoad retorna { value, online }
+  async function cloudLoad(key) {
+    if (!loggedInUser?.token) return { value: null, online: false };
+    try {
+      const res = await fetch(API_URL + '/api/userdata/load?key=' + encodeURIComponent(key), {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      return { value: (data.success && data.value != null) ? data.value : null, online: true };
+    } catch { return { value: null, online: false }; }
+  }
+
+  // cloudLoadAll retorna { data, online }
+  async function cloudLoadAll() {
+    if (!loggedInUser?.token) return { data: {}, online: false };
+    try {
+      const res = await fetch(API_URL + '/api/userdata/load', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const d = await res.json();
+      return { data: (d.success && d.data) ? d.data : {}, online: true };
+    } catch { return { data: {}, online: false }; }
+  }
+
+  function saveNotas() {
+    const payload = {
+      notas,
+      totalReceita,
+      totalDespesa,
+      freteCount,
+    };
+    const jsonStr = JSON.stringify(payload);
+    cloudSave('pj_notas', jsonStr);
+  }
+
+  function addNotaListItem(nota) {
+    notasEmpty.style.display = 'none';
+    const el = document.createElement('div');
+    el.className = 'nf-list-item';
+    el.innerHTML =
+      '<div class="nf-list-left">' +
+        '<div class="nf-list-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="white" opacity="0.7"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>' +
+        '<div class="nf-list-info">' +
+          '<div class="nf-list-title">Frete #' + nota.numero + '</div>' +
+          '<div class="nf-list-sub">' + nota.origem + ' → ' + nota.destino + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="nf-list-valor ' + (nota.bruto >= 0 ? 'positivo' : 'negativo') + '">' +
+        (nota.bruto >= 0 ? '+' : '-') + formatMoney(nota.bruto) +
+      '</div>';
+    el.addEventListener('click', () => openNota(notas.indexOf(nota)));
+    notasList.prepend(el);
+  }
+
+  function updateNotasSummary() {
+    const saldo = totalReceita - totalDespesa;
+    notasReceita.textContent = formatMoney(totalReceita);
+    notasDespesa.textContent = formatMoney(totalDespesa);
+    notasSaldo.textContent = (saldo >= 0 ? '+' : '-') + formatMoney(Math.abs(saldo));
+    notasSaldo.style.color = saldo >= 0 ? '#00ff88' : '#ff3b30';
+    notasTotal.textContent = freteCount;
+  }
+
+  function applyNotasData(data) {
+    notas = data.notas;
+    totalReceita = data.totalReceita || 0;
+    totalDespesa = data.totalDespesa || 0;
+    freteCount = data.freteCount || notas.length;
+    notasList.innerHTML = '';
+    notas.forEach(nota => addNotaListItem(nota));
+    updateNotasSummary();
+  }
+
+  function loadSavedNotas() {
+    cloudLoad('pj_notas').then(result => {
+      if (result.value) {
+        try {
+          const data = JSON.parse(result.value);
+          if (Array.isArray(data.notas) && data.notas.length) {
+            applyNotasData(data);
+            console.log('✅ Notas carregadas do servidor:', notas.length, 'notas');
+          }
+        } catch(e) { console.warn('Erro parsing notas do servidor', e); }
+      } else if (!result.online) {
+        console.warn('⚠️ Servidor indisponível — sem dados para carregar');
+      }
+    });
+  }
+
+  const currencyRate = 5.2;
+  function formatMoney(val) {
+    return 'R$ ' + Math.abs(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function resetAndLoadNotas() {
+    notas = [];
+    totalReceita = 0;
+    totalDespesa = 0;
+    freteCount = 0;
+    notasList.innerHTML = '';
+    notasEmpty.style.display = '';
+    updateNotasSummary();
+    loadSavedNotas();
+  }
+
+  loadSavedNotas();
+
+  function getDate() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  }
+
+  function buildNotaText(nota) {
+    const gastoTotal = nota.gastos.reduce((s, g) => s + g.valor, 0);
+    const liquido = nota.bruto - gastoTotal;
+    const valorKm = nota.distancia > 0 ? nota.bruto / nota.distancia : 0;
+    function cash(val) {
+      return Math.abs(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Plain text version for Discord
+    const W = 34;
+    function sep() { return '+' + '='.repeat(W) + '+'; }
+    function blank() { return '|' + ' '.repeat(W) + '|'; }
+    function center(t) {
+      if (t.length > W) t = t.substring(0, W);
+      var l = Math.floor((W - t.length) / 2);
+      return '|' + ' '.repeat(l) + t + ' '.repeat(W - l - t.length) + '|';
+    }
+    function left(t) {
+      if (t.length > W - 2) t = t.substring(0, W - 2);
+      return '| ' + t + ' '.repeat(W - 2 - t.length) + ' |';
+    }
+    function kv(k, v) {
+      var inner = W - 2;
+      if (k.length + 1 + v.length > inner) v = v.substring(0, Math.max(1, inner - k.length - 1));
+      var gap = inner - k.length - v.length;
+      return '| ' + k + ' '.repeat(Math.max(1, gap)) + v + ' |';
+    }
+    var lines = [];
+    lines.push(sep());
+    lines.push(center('CT-e FRETE #' + nota.numero));
+    lines.push(center('TRANSPORTADORA'));
+    lines.push(sep());
+    lines.push(kv('Data:', nota.data + ' ' + nota.hora));
+    lines.push(kv('Motorista:', nota.motorista));
+    lines.push(sep());
+    lines.push(kv('Origem:', nota.origem));
+    lines.push(kv('Destino:', nota.destino));
+    lines.push(kv('Carga:', nota.carga));
+    lines.push(kv('Veiculo:', nota.veiculo));
+    lines.push(kv('Distancia:', nota.distancia + ' km'));
+    lines.push(kv('R$/km:', 'R$ ' + cash(valorKm)));
+    if (nota.danoCarga > 0) lines.push(kv('Dano carga:', nota.danoCarga + '%'));
+    if (nota.xp > 0) lines.push(kv('XP:', '+' + nota.xp));
+    lines.push(sep());
+    lines.push(kv('BRUTO:', 'R$ ' + cash(nota.bruto)));
+    nota.gastos.forEach(function(g) { lines.push(kv(' -' + g.motivo, 'R$ ' + cash(g.valor))); });
+    lines.push(kv('LIQUIDO:', (liquido >= 0 ? 'R$ ' : '-R$ ') + cash(Math.abs(liquido))));
+    lines.push(sep());
+    lines.push(center(liquido >= 0 ? 'APROVADO' : 'CONCLUIDO'));
+    lines.push(sep());
+    return lines.join('\n');
+  }
+
+  function generateBarcode() {
+    // Gera barras visuais pseudo-aleatórias
+    let bars = '';
+    const widths = [1, 1, 2, 1, 1, 2, 1, 3, 1, 1, 2, 1, 1, 1, 2, 1, 3, 1, 1, 2, 1, 1, 1, 2, 1, 1, 3, 1, 2, 1, 1, 1, 2, 1, 1, 3, 1, 1, 2, 1];
+    widths.forEach((w, i) => {
+      if (i % 2 === 0) {
+        bars += '<div class="dacte-barcode-bar" style="width:' + w + 'px"></div>';
+      } else {
+        bars += '<div style="width:' + w + 'px"></div>';
+      }
+    });
+    return bars;
+  }
+
+  function generateAccessKey(nota) {
+    // Gera chave de acesso fictícia no formato CT-e
+    const pad = (n, l) => String(n).padStart(l, '0');
+    const rnd = (l) => { let s = ''; for (let i = 0; i < l; i++) s += Math.floor(Math.random() * 10); return s; };
+    return pad(35, 2) + pad(new Date().getFullYear() % 100, 2) + pad(new Date().getMonth() + 1, 2) +
+           rnd(14) + '57' + rnd(3) + pad(nota.numero, 9) + rnd(1) + rnd(8) + rnd(1);
+  }
+
+  function buildRecibo(nota) {
+    const gastoTotal = nota.gastos.reduce((s, g) => s + g.valor, 0);
+    const liquido = nota.bruto - gastoTotal;
+    const valorKm = nota.distancia > 0 ? nota.bruto / nota.distancia : 0;
+    const isApproved = liquido >= 0;
+    function cash(val) {
+      return Math.abs(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    const accessKey = generateAccessKey(nota);
+    const formattedKey = accessKey.replace(/(.{4})/g, '$1 ').trim();
+
+    let gastosHtml = '';
+    if (nota.gastos.length > 0) {
+      nota.gastos.forEach(g => {
+        gastosHtml += '<div class="dacte-gastos-row"><span class="g-motivo">' + g.motivo + '</span><span class="g-valor">- R$ ' + cash(g.valor) + '</span></div>';
+      });
+    } else {
+      gastosHtml = '<div style="padding:2px 5px;font-size:6.5px;opacity:0.4;font-style:italic;">Sem deduções registradas</div>';
+    }
+
+    return '<div class="dacte">' +
+      '<!-- HEADER -->' +
+      '<div class="dacte-header">' +
+        '<div class="dacte-header-left">' +
+          '<div class="dacte-title">CT-e — Conhecimento de Transporte</div>' +
+          '<div class="dacte-subtitle">Documento Auxiliar do CT-e — DACTE</div>' +
+          '<div class="dacte-doc-num">Nº ' + String(nota.numero).padStart(6, '0') + ' | Série 1</div>' +
+        '</div>' +
+        '<div class="dacte-header-right">' +
+          '<div class="dacte-modal-label">Modal</div>' +
+          '<div>ROD</div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- BARCODE -->' +
+      '<div class="dacte-barcode">' + generateBarcode() + '</div>' +
+      '<div class="dacte-key">' + formattedKey + '</div>' +
+      '<!-- EMISSÃO -->' +
+      '<div class="dacte-section">' +
+        '<div class="dacte-section-title">Dados da Emissão</div>' +
+        '<div class="dacte-grid dacte-grid-3">' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Data</div><div class="dacte-cell-value">' + nota.data + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Hora</div><div class="dacte-cell-value">' + nota.hora + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Tipo Serviço</div><div class="dacte-cell-value">Normal</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- MOTORISTA -->' +
+      '<div class="dacte-section">' +
+        '<div class="dacte-section-title">Motorista / Remetente</div>' +
+        '<div class="dacte-grid dacte-grid-2">' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Nome</div><div class="dacte-cell-value">' + nota.motorista + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Veículo</div><div class="dacte-cell-value">' + nota.veiculo + '</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- ROTA -->' +
+      '<div class="dacte-section">' +
+        '<div class="dacte-section-title">Início / Término da Prestação</div>' +
+        '<div class="dacte-grid dacte-grid-2">' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Origem</div><div class="dacte-cell-value">' + nota.origem + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Destino</div><div class="dacte-cell-value">' + nota.destino + '</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- CARGA -->' +
+      '<div class="dacte-section">' +
+        '<div class="dacte-section-title">Produto / Carga</div>' +
+        '<div class="dacte-grid dacte-grid-3">' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Carga</div><div class="dacte-cell-value">' + nota.carga + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Distância</div><div class="dacte-cell-value">' + nota.distancia + ' km</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Dano</div><div class="dacte-cell-value' + (nota.danoCarga > 0 ? ' red' : '') + '">' + (nota.danoCarga || 0) + '%</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- VALORES -->' +
+      '<div class="dacte-section">' +
+        '<div class="dacte-section-title">Componentes do Valor da Prestação</div>' +
+        '<div class="dacte-grid dacte-grid-4">' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Frete Valor</div><div class="dacte-cell-value">R$ ' + cash(nota.bruto) + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">R$/km</div><div class="dacte-cell-value">R$ ' + cash(valorKm) + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">XP Ganho</div><div class="dacte-cell-value">+' + (nota.xp || 0) + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Deduções</div><div class="dacte-cell-value red">R$ ' + cash(gastoTotal) + '</div></div>' +
+        '</div>' +
+        gastosHtml +
+      '</div>' +
+      '<!-- TOTAIS -->' +
+      '<div class="dacte-section">' +
+        '<div class="dacte-section-title">Valor Total do Serviço</div>' +
+        '<div class="dacte-grid dacte-grid-3">' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Valor Bruto</div><div class="dacte-cell-value big">R$ ' + cash(nota.bruto) + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Deduções</div><div class="dacte-cell-value big red">R$ ' + cash(gastoTotal) + '</div></div>' +
+          '<div class="dacte-cell"><div class="dacte-cell-label">Valor Líquido</div><div class="dacte-cell-value big ' + (isApproved ? 'green' : 'red') + '">' + (liquido >= 0 ? 'R$ ' : '-R$ ') + cash(Math.abs(liquido)) + '</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- FOOTER -->' +
+      '<div class="dacte-footer">' +
+        '<div class="dacte-stamp ' + (isApproved ? 'approved' : 'deficit') + '">' + (isApproved ? '✓ APROVADO' : '✗ DÉFICIT') + '</div>' +
+        '<div class="dacte-obs">Documento sem valor fiscal — Emitido eletronicamente</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function openNota(index) {
+    const nota = notas[index];
+    if (!nota) return;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    notaDetail.classList.add('active');
+    notaDetailContent.innerHTML = buildRecibo(nota);
+  }
+
+  function buildDacteStandaloneHtml(nota) {
+    const gastoTotal = nota.gastos.reduce((s, g) => s + g.valor, 0);
+    const liquido = nota.bruto - gastoTotal;
+    const valorKm = nota.distancia > 0 ? nota.bruto / nota.distancia : 0;
+    const isApproved = liquido >= 0;
+    function cash(val) { return Math.abs(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    const accessKey = generateAccessKey(nota);
+    const formattedKey = accessKey.replace(/(.{4})/g, '$1 ').trim();
+
+    let gastosHtml = '';
+    if (nota.gastos.length > 0) {
+      nota.gastos.forEach(g => {
+        gastosHtml += '<div style="display:flex;justify-content:space-between;padding:3px 10px;font-size:12px;"><span style="opacity:0.6;">' + g.motivo + '</span><span style="font-weight:600;color:#c0392b;">- R$ ' + cash(g.valor) + '</span></div>';
+      });
+    } else {
+      gastosHtml = '<div style="padding:3px 10px;font-size:11px;opacity:0.4;font-style:italic;">Sem deduções registradas</div>';
+    }
+
+    // Barcode bars
+    let barsHtml = '';
+    const widths = [1,1,2,1,1,2,1,3,1,1,2,1,1,1,2,1,3,1,1,2,1,1,1,2,1,1,3,1,2,1,1,1,2,1,1,3,1,1,2,1,1,2,1,1,3,1,2,1,1,1,2,1];
+    widths.forEach((w, i) => {
+      if (i % 2 === 0) barsHtml += '<div style="width:' + (w*2) + 'px;background:#000;height:100%;"></div>';
+      else barsHtml += '<div style="width:' + (w*2) + 'px;"></div>';
+    });
+
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#fff;font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#111;">' +
+      '<div style="width:460px;border:2px solid #222;background:#fafafa;">' +
+        // HEADER
+        '<div style="display:flex;border-bottom:2px solid #222;">' +
+          '<div style="flex:1;padding:10px 12px;">' +
+            '<div style="font-weight:800;font-size:16px;letter-spacing:0.5px;">CT-e — Conhecimento de Transporte</div>' +
+            '<div style="font-size:11px;opacity:0.5;margin-top:2px;">Documento Auxiliar do CT-e — DACTE</div>' +
+            '<div style="font-size:12px;font-weight:700;margin-top:4px;">Nº ' + String(nota.numero).padStart(6,'0') + ' | Série 1</div>' +
+          '</div>' +
+          '<div style="width:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0f0f0;border-left:1px solid #333;font-weight:900;font-size:18px;">' +
+            '<div style="font-size:9px;font-weight:400;opacity:0.6;text-transform:uppercase;margin-bottom:2px;">Modal</div>' +
+            'ROD' +
+          '</div>' +
+        '</div>' +
+        // BARCODE
+        '<div style="display:flex;align-items:center;justify-content:center;padding:6px 12px;border-bottom:1px solid #333;background:#fff;height:30px;gap:1px;">' + barsHtml + '</div>' +
+        '<div style="font-size:9px;text-align:center;padding:3px 8px;opacity:0.5;border-bottom:1px solid #333;font-family:Courier New,monospace;letter-spacing:0.5px;word-break:break-all;">' + formattedKey + '</div>' +
+        // EMISSÃO
+        '<div style="border-bottom:1px solid #333;">' +
+          '<div style="background:#e8e8e8;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding:4px 10px;border-bottom:1px solid #ccc;">Dados da Emissão</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;">' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Data</div><div style="font-size:13px;font-weight:600;">' + nota.data + '</div></div>' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Hora</div><div style="font-size:13px;font-weight:600;">' + nota.hora + '</div></div>' +
+            '<div style="padding:4px 10px;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Tipo Serviço</div><div style="font-size:13px;font-weight:600;">Normal</div></div>' +
+          '</div>' +
+        '</div>' +
+        // MOTORISTA
+        '<div style="border-bottom:1px solid #333;">' +
+          '<div style="background:#e8e8e8;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding:4px 10px;border-bottom:1px solid #ccc;">Motorista / Remetente</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;">' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Nome</div><div style="font-size:13px;font-weight:600;">' + nota.motorista + '</div></div>' +
+            '<div style="padding:4px 10px;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Veículo</div><div style="font-size:13px;font-weight:600;">' + nota.veiculo + '</div></div>' +
+          '</div>' +
+        '</div>' +
+        // ROTA
+        '<div style="border-bottom:1px solid #333;">' +
+          '<div style="background:#e8e8e8;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding:4px 10px;border-bottom:1px solid #ccc;">Início / Término da Prestação</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;">' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Origem</div><div style="font-size:13px;font-weight:600;">' + nota.origem + '</div></div>' +
+            '<div style="padding:4px 10px;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Destino</div><div style="font-size:13px;font-weight:600;">' + nota.destino + '</div></div>' +
+          '</div>' +
+        '</div>' +
+        // CARGA
+        '<div style="border-bottom:1px solid #333;">' +
+          '<div style="background:#e8e8e8;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding:4px 10px;border-bottom:1px solid #ccc;">Produto / Carga</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;">' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Carga</div><div style="font-size:13px;font-weight:600;">' + nota.carga + '</div></div>' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Distância</div><div style="font-size:13px;font-weight:600;">' + nota.distancia + ' km</div></div>' +
+            '<div style="padding:4px 10px;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Dano</div><div style="font-size:13px;font-weight:600;' + (nota.danoCarga > 0 ? 'color:#c0392b;' : '') + '">' + (nota.danoCarga || 0) + '%</div></div>' +
+          '</div>' +
+        '</div>' +
+        // VALORES
+        '<div style="border-bottom:1px solid #333;">' +
+          '<div style="background:#e8e8e8;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding:4px 10px;border-bottom:1px solid #ccc;">Componentes do Valor da Prestação</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;">' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Frete Valor</div><div style="font-size:12px;font-weight:600;">R$ ' + cash(nota.bruto) + '</div></div>' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">R$/km</div><div style="font-size:12px;font-weight:600;">R$ ' + cash(valorKm) + '</div></div>' +
+            '<div style="padding:4px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">XP Ganho</div><div style="font-size:12px;font-weight:600;">+' + (nota.xp || 0) + '</div></div>' +
+            '<div style="padding:4px 10px;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Deduções</div><div style="font-size:12px;font-weight:600;color:#c0392b;">R$ ' + cash(gastoTotal) + '</div></div>' +
+          '</div>' +
+          gastosHtml +
+        '</div>' +
+        // TOTAIS
+        '<div style="border-bottom:1px solid #333;">' +
+          '<div style="background:#e8e8e8;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding:4px 10px;border-bottom:1px solid #ccc;">Valor Total do Serviço</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;">' +
+            '<div style="padding:5px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Valor Bruto</div><div style="font-size:15px;font-weight:800;">R$ ' + cash(nota.bruto) + '</div></div>' +
+            '<div style="padding:5px 10px;border-right:1px solid #ddd;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Deduções</div><div style="font-size:15px;font-weight:800;color:#c0392b;">R$ ' + cash(gastoTotal) + '</div></div>' +
+            '<div style="padding:5px 10px;"><div style="font-size:9px;opacity:0.5;text-transform:uppercase;">Valor Líquido</div><div style="font-size:15px;font-weight:800;color:' + (isApproved ? '#0a7a2e' : '#c0392b') + ';">' + (liquido >= 0 ? 'R$ ' : '-R$ ') + cash(Math.abs(liquido)) + '</div></div>' +
+          '</div>' +
+        '</div>' +
+        // FOOTER
+        '<div style="background:#f5f5f5;border-top:2px solid #222;padding:8px 12px;text-align:center;">' +
+          '<div style="font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:4px 16px;display:inline-block;border:2px solid ' + (isApproved ? '#0a7a2e' : '#c0392b') + ';border-radius:3px;color:' + (isApproved ? '#0a7a2e' : '#c0392b') + ';">' + (isApproved ? '✓ APROVADO' : '✗ DÉFICIT') + '</div>' +
+          '<div style="font-size:10px;opacity:0.4;margin-top:4px;font-style:italic;">Documento sem valor fiscal — Emitido eletronicamente</div>' +
+        '</div>' +
+      '</div>' +
+    '</body></html>';
+  }
+
+  async function sendNotaImageToDiscord(nota) {
+    if (!loggedInUser?.token) return;
+    try {
+      const html = buildDacteStandaloneHtml(nota);
+      const base64Png = await ipcRenderer.invoke('capture-nota-image', html);
+      if (!base64Png) {
+        console.warn('Falha ao capturar imagem da nota');
+        // Fallback: enviar texto
+        fetch(API_URL + '/api/discord/nota', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+          body: JSON.stringify({ nota: buildNotaText(nota) })
+        }).catch(() => {});
+        return;
+      }
+      await fetch(API_URL + '/api/discord/nota-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ image: base64Png, numero: nota.numero })
+      });
+    } catch (err) {
+      console.warn('Erro ao enviar nota como imagem:', err);
+    }
+  }
+
+  function addDespesa(motivo, valor) {
+    despesasViagem.push({ motivo, valor });
+  }
+
+  function finalizarFrete(data) {
+    // Bloquear se não estiver logado
+    if (!loggedInUser) return;
+
+    // Anti-duplicata: ignorar se chamada há menos de 10s
+    const now = Date.now();
+    if (now - lastFreteTimestamp < 10000) return;
+    lastFreteTimestamp = now;
+
+    const revenue = (data.jobDeliveredRevenue || data.jobIncome || 0) * currencyRate;
+    const gastoTotal = despesasViagem.reduce((s, g) => s + g.valor, 0);
+    const liquido = revenue - gastoTotal;
+
+    freteCount++;
+    totalReceita += revenue;
+    totalDespesa += gastoTotal;
+    const saldo = totalReceita - totalDespesa;
+
+    const job = currentJob;
+
+    const nota = {
+      numero: freteCount,
+      data: getDate(),
+      hora: sbTime.textContent || '--:--',
+      motorista: loggedInUser ? loggedInUser.username : 'Motorista',
+      origem: job.citySrc || data.citySrc || 'Nenhum',
+      destino: job.cityDst || data.cityDst || 'Nenhum',
+      carga: job.cargo || data.cargo || 'Não informada',
+      veiculo: job.veiculo || [data.truckBrand, data.truckName].filter(Boolean).join(' ') || 'Desconhecido',
+      distancia: data.jobDeliveredDistanceKm || job.plannedDistanceKm || data.plannedDistanceKm || 0,
+      danoCarga: data.cargoDamage || 0,
+      xp: data.jobDeliveredEarnedXp || 0,
+      bruto: revenue,
+      gastos: [...despesasViagem],
+    };
+
+    currentJob = {};
+    notas.unshift(nota);
+    despesasViagem = [];
+
+    updateNotasSummary();
+    addNotaListItem(nota);
+    if (notasList.children.length > 30) notasList.removeChild(notasList.lastChild);
+
+    // Depositar lucro líquido no banco virtual
+    const notaGastoTotal = nota.gastos.reduce((s, g) => s + g.valor, 0);
+    const notaLiquido = nota.bruto - notaGastoTotal;
+    if (notaLiquido > 0) {
+      depositToBank(notaLiquido, 'Frete #' + nota.numero + ' → ' + nota.destino);
+    }
+
+    saveNotas();
+
+    // Enviar nota como imagem para o Discord via API
+    sendNotaImageToDiscord(nota);
+
+    showNotification('✅', 'Frete #' + nota.numero + ' — ' + (liquido >= 0 ? '+' : '') + formatMoney(liquido));
+  }
+
+  function checkEvents(data) {
+    if (!data) return;
+
+    if (typeof prevEvents.anyPedagio === 'undefined') {
+      prevEvents = {
+        jobFinished: data.jobFinished,
+        anyPedagio: data.anyPedagio,
+        lowFuelAlertTriggered: false,
+        wearAlertTriggered: false,
+        speedingAlertTriggered: false,
+      };
+      return;
+    }
+
+    if (data.onJob && data.citySrc) {
+      currentJob = {
+        citySrc: data.citySrc,
+        cityDst: data.cityDst,
+        cargo: data.cargo,
+        veiculo: [data.truckBrand, data.truckName].filter(Boolean).join(' '),
+        plannedDistanceKm: data.plannedDistanceKm || 0,
+      };
+    }
+
+    // Job finish detection (moved to telemetry handler with _prevJobFinished)
+    // Keep legacy check here for tollgate events only
+
+    // Combustível crítico < 20%
+    const fuelPctAlert = data.fuelCapacity > 0 ? (data.fuel / data.fuelCapacity) * 100 : 100;
+    if (fuelPctAlert < 20 && !prevEvents.lowFuelAlertTriggered) {
+      showNotification('⛽', '⚠️ Combustível crítico! ' + Math.round(fuelPctAlert) + '%');
+      prevEvents.lowFuelAlertTriggered = true;
+    } else if (fuelPctAlert >= 30 && prevEvents.lowFuelAlertTriggered) {
+      prevEvents.lowFuelAlertTriggered = false;
+    }
+
+    // Desgaste crítico > 75%
+    const maxWear = Math.max(
+      data.wearEngine || 0,
+      data.wearTransmission || 0,
+      data.wearCabin || 0,
+      data.wearChassis || 0,
+      data.wearWheels || 0
+    );
+    if (maxWear > 75 && !prevEvents.wearAlertTriggered) {
+      const partNames = {
+        engine: 'Motor',
+        transmission: 'Câmbio',
+        cabin: 'Cabine',
+        chassis: 'Chassi',
+        wheels: 'Pneus'
+      };
+      let wornPart = 'Motor';
+      if (data.wearEngine <= maxWear) wornPart = partNames.engine;
+      if (data.wearTransmission === maxWear) wornPart = partNames.transmission;
+      if (data.wearCabin === maxWear) wornPart = partNames.cabin;
+      if (data.wearChassis === maxWear) wornPart = partNames.chassis;
+      if (data.wearWheels === maxWear) wornPart = partNames.wheels;
+      
+      showNotification('🔧', '⚠️ Manutenção urgente! ' + wornPart + ' (' + maxWear + '%)');
+      prevEvents.wearAlertTriggered = true;
+    } else if (maxWear <= 60 && prevEvents.wearAlertTriggered) {
+      prevEvents.wearAlertTriggered = false;
+    }
+
+    // Limite de velocidade
+    const isExceedingSpeed = data.speedLimit && data.speed > data.speedLimit;
+    if (isExceedingSpeed && !prevEvents.speedingAlertTriggered) {
+      showNotification('⚠', 'Limite de velocidade: ' + data.speedLimit + ' km/h');
+      prevEvents.speedingAlertTriggered = true;
+    } else if (!isExceedingSpeed && prevEvents.speedingAlertTriggered) {
+      prevEvents.speedingAlertTriggered = false;
+    }
+
+    prevEvents = {
+      jobFinished: data.jobFinished,
+      anyPedagio: data.anyPedagio,
+      lowFuelAlertTriggered: prevEvents.lowFuelAlertTriggered,
+      wearAlertTriggered: prevEvents.wearAlertTriggered,
+      speedingAlertTriggered: prevEvents.speedingAlertTriggered,
+    };
+  }
+
+  // ===== BANCO VIRTUAL =====
+  function renderBankTransaction(tx) {
+    const el = document.createElement('div');
+    el.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);';
+    
+    let icon, color;
+    if (tx.type === 'deposit') {
+      icon = '💰'; color = '#00ff88';
+    } else if (tx.type === 'pix_out') {
+      icon = '📦'; color = '#ff3b30';
+    } else if (tx.type === 'pix_in') {
+      icon = '📦'; color = '#00ff88';
+    } else {
+      icon = '💰'; color = '#ffffff';
+    }
+
+    const amountStr = (tx.type === 'pix_out' ? '-' : '+') + formatMoney(tx.amount);
+    const desc = tx.description || tx.type;
+    const date = tx.created_at ? new Date(tx.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+
+    el.innerHTML =
+      '<div style="font-size:18px;">' + icon + '</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + desc + '</div>' +
+        '<div style="font-size:9px;opacity:0.4;">' + date + '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;font-weight:700;color:' + color + ';">' + amountStr + '</div>';
+    return el;
+  }
+
+  function updateBankDisplay(balance, transactions) {
+    const balanceEl = document.getElementById('bank-balance');
+    const holderEl = document.getElementById('bank-holder');
+    const txContainer = document.getElementById('bank-transactions');
+    const emptyEl = document.getElementById('bank-empty');
+
+    if (balanceEl) balanceEl.textContent = formatMoney(balance);
+    if (holderEl && loggedInUser) holderEl.textContent = loggedInUser.username;
+
+    if (txContainer && transactions) {
+      // Clear existing transactions but keep empty state
+      const items = txContainer.querySelectorAll('div:not(#bank-empty)');
+      items.forEach(el => el.remove());
+
+      if (transactions.length === 0) {
+        if (emptyEl) emptyEl.style.display = '';
+      } else {
+        if (emptyEl) emptyEl.style.display = 'none';
+        transactions.forEach(tx => {
+          txContainer.appendChild(renderBankTransaction(tx));
+        });
+      }
+    }
+  }
+
+  async function loadBankData() {
+    if (!loggedInUser?.token) return;
+    try {
+      const [balRes, txRes] = await Promise.all([
+        fetch(API_URL + '/api/bank/balance', {
+          headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+        }),
+        fetch(API_URL + '/api/bank/transactions', {
+          headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+        })
+      ]);
+      const balData = await balRes.json();
+      const txData = await txRes.json();
+      updateBankDisplay(balData.balance || 0, txData.transactions || []);
+    } catch (err) {
+      console.warn('Erro carregando dados bancários:', err);
+    }
+  }
+
+  async function depositToBank(amount, description) {
+    if (!loggedInUser?.token) return;
+    try {
+      const res = await fetch(API_URL + '/api/bank/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ amount, description: description || 'Frete' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        updateBankDisplay(data.balance, null);
+      }
+    } catch (err) {
+      console.warn('Erro ao depositar:', err);
+    }
+  }
+
+  // Bank PIX button navigation
+  document.getElementById('bank-pix-btn')?.addEventListener('click', () => {
+    navigateTo('pix');
+  });
+
+  // PIX back button
+  document.getElementById('pix-back')?.addEventListener('click', () => {
+    navigateTo('banco');
+  });
+
+  // ===== PIX =====
+  function showPixMsg(msg, isError) {
+    const el = document.getElementById('pix-msg');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.color = isError ? '#ff3b30' : '#00ff88';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+
+
+  // PIX send
+  document.getElementById('pix-send-btn')?.addEventListener('click', async () => {
+    if (!loggedInUser?.token) { showPixMsg('Faça login primeiro', true); return; }
+    
+    const toInput = document.getElementById('pix-to');
+    const amountInput = document.getElementById('pix-amount');
+    const to = toInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+
+    if (!to) { showPixMsg('Informe o destinatário', true); return; }
+    if (!amount || amount <= 0) { showPixMsg('Valor inválido', true); return; }
+
+    try {
+      const res = await fetch(API_URL + '/api/bank/pix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ to, amount })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPixMsg('PIX enviado com sucesso!', false);
+        toInput.value = '';
+        amountInput.value = '';
+        updateBankDisplay(data.balance, null);
+        showNotification('💸', 'PIX de ' + formatMoney(amount) + ' enviado para ' + to);
+      } else {
+        showPixMsg(data.error || 'Erro ao enviar PIX', true);
+      }
+    } catch (err) {
+      showPixMsg('Erro de conexão', true);
+    }
+  });
+
+  // ===== TELEMETRY =====
+  let connected = false;
+  ipcRenderer.on('telemetry', (event, data) => {
+    connected = !!data;
+    ['gps','fuel','dash'].forEach(app => {
+      const con = document.getElementById(app + '-connected');
+      const dis = document.getElementById(app + '-disconnected');
+      if (con) con.style.display = connected ? '' : 'none';
+      if (dis) dis.style.display = connected ? 'none' : '';
+    });
+
+    if (!data) {
+      sbTime.textContent = '--:--';
+      homeTime.textContent = '--:--';
+      loginTime.textContent = '--:--';
+      return;
+    }
+
+    lastTelemetryData = data;
+
+    // Job finish detection via _prevJobFinished (fallback — trigger principal é o event-transition)
+    if (_prevJobFinished === null) {
+      _prevJobFinished = data.jobFinished;
+    } else if (_prevJobFinished === 0 && data.jobFinished >= 1) {
+      console.log('[FRETE] telemetry handler detectou jobFinished 0→1 (fallback)', data.jobDeliveredRevenue, data.jobIncome);
+      finalizarFrete(data);
+    }
+    _prevJobFinished = data.jobFinished;
+    prevEvents.jobFinished = data.jobFinished;
+
+    // Atualizar dados de localização para usar em pedágio
+    currentTelemetryData = {
+      citySrc: data.citySrc || 'Nenhum',
+      cityDst: data.cityDst || 'Nenhum',
+      routeDistance: data.routeDistance || 0,
+      cargo: data.cargo || 'Nenhuma',
+      truckBrand: data.truckBrand || '',
+      truckName: data.truckName || '',
+      truckLicensePlate: data.truckLicensePlate || '',
+      truckLicensePlateCountry: data.truckLicensePlateCountry || '',
+      tollgatePayAmount: data.tollgatePayAmount || 0,
+      ferryPayAmount: data.ferryPayAmount || 0,
+      trainPayAmount: data.trainPayAmount || 0
+    };
+
+    // Status bar
+    sbTime.textContent = data.time;
+    if (data.fuelCapacity > 0) {
+      const pct = Math.round((data.fuel / data.fuelCapacity) * 100);
+      sbFuelPct.textContent = pct + '%';
+      sbBatteryFill.style.width = pct + '%';
+      sbBatteryFill.style.background = pct < 20 ? '#ff3b30' : '#34c759';
+    }
+
+    // Home
+    homeTime.textContent = data.time || '--:--';
+    loginTime.textContent = data.time || '--:--';
+    homeDate.textContent = data.gameDate || '';
+    const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+    loginDate.textContent = dias[new Date().getDay()];
+
+    // GPS
+    document.getElementById('gps-src').textContent = data.citySrc || '---';
+    document.getElementById('gps-dst').textContent = data.cityDst || '---';
+    document.getElementById('gps-cargo').textContent = data.cargo ? '🚚 ' + data.cargo : 'Sem carga';
+    document.getElementById('gps-distance').textContent = data.routeDistance > 0 ? data.routeDistance + ' km' : 'Sem rota';
+    document.getElementById('gps-planned').textContent = data.plannedDistanceKm > 0 ? 'Total: ' + data.plannedDistanceKm + ' km' : '';
+    document.getElementById('gps-eta').textContent = data.routeTime || '--';
+    document.getElementById('gps-speedlimit').textContent = data.speedLimit ? data.speedLimit + ' km/h' : 'Sem limite';
+    const dmgEl = document.getElementById('gps-cargo-dmg');
+    dmgEl.textContent = data.cargoDamage + '%';
+    dmgEl.className = 'card-value ' + (data.cargoDamage > 5 ? 'text-red' : 'text-green');
+
+    // Fuel
+    const fuelPct = data.fuelCapacity > 0 ? (data.fuel / data.fuelCapacity) * 100 : 0;
+    const fuelBar = document.getElementById('fuel-bar');
+    fuelBar.style.width = fuelPct + '%';
+    fuelBar.className = 'fuel-fill' + (fuelPct < 20 ? ' low' : '');
+    document.getElementById('fuel-current').textContent = data.fuel;
+    document.getElementById('fuel-max').textContent = data.fuelCapacity;
+    document.getElementById('fuel-range').textContent = data.fuelRange > 0 ? data.fuelRange + ' km' : '-- km';
+    document.getElementById('fuel-consumption').textContent = (typeof data.fuelAvgConsumption === 'number' && data.fuelAvgConsumption > 0)
+      ? data.fuelAvgConsumption.toFixed(2) + ' L/km'
+      : '--';
+
+    // Dashboard
+    const dashSpeed = document.getElementById('dash-speed');
+    dashSpeed.textContent = data.speed;
+    dashSpeed.className = 'dash-speed-num ' + ((data.speedLimit && data.speed > data.speedLimit) ? 'text-red' : 'text-green');
+    document.getElementById('dash-gear').textContent = data.gear === 0 ? 'N' : data.gear < 0 ? 'R' + Math.abs(data.gear) : data.gear;
+    document.getElementById('dash-rpm').textContent = data.rpm;
+    document.getElementById('dash-rpm-bar').style.width = (data.rpmMax > 0 ? Math.min((data.rpm / data.rpmMax) * 100, 100) : 0) + '%';
+    document.getElementById('dash-cruise').textContent = data.cruiseControl > 0 ? data.cruiseControl + ' km/h' : 'OFF';
+    document.getElementById('dash-limit').textContent = data.speedLimit ? data.speedLimit + ' km/h' : '--';
+    document.getElementById('dash-truck').textContent = [data.truckBrand, data.truckName].filter(Boolean).join(' ') || '--';
+    document.getElementById('dash-odometer').textContent = data.odometer > 0 ? data.odometer.toLocaleString('pt-BR') + ' km' : '-- km';
+    document.getElementById('dash-wear-engine').textContent = data.wearEngine + '%';
+    document.getElementById('dash-wear-trans').textContent = data.wearTransmission + '%';
+    document.getElementById('dash-wear-cabin').textContent = data.wearCabin + '%';
+    document.getElementById('dash-wear-chassis').textContent = data.wearChassis + '%';
+    document.getElementById('dash-wear-wheels').textContent = data.wearWheels + '%';
+    ['engine','trans','cabin','chassis','wheels'].forEach(p => {
+      const el = document.getElementById('dash-wear-' + p);
+      const v = parseInt(el.textContent);
+      el.style.color = v > 30 ? '#ff3b30' : v > 10 ? '#ffcc00' : '#00ff88';
+    });
+
+    // Check events (fuel, wear, speed alerts)
+    if (!telemetryInitialized) {
+      prevEvents = {
+        jobFinished: data.jobFinished,
+        tollgate: data.tollgate,
+        ferry: data.ferry,
+        train: data.train,
+      };
+      telemetryInitialized = true;
+    } else {
+      checkEvents(data);
+    }
+  });
+
+  // ===== WALLPAPER CHANGER =====
+  const wallpaperBg = document.getElementById('wallpaper-bg');
+  const wallpaperOverlay = document.getElementById('wallpaper-overlay');
+  
+  function setWallpaper(imageUrl, fitMode = 'cover', showNotif = true) {
+    if (imageUrl) {
+      wallpaperBg.src = imageUrl;
+      wallpaperBg.style.objectFit = fitMode;
+      wallpaperBg.style.display = 'block';
+      wallpaperOverlay.style.display = 'block';
+      cloudSave('pj_wallpaper', imageUrl);
+      cloudSave('pj_wallpaper_fit', fitMode);
+      console.log('✅ Papel de parede alterado:', imageUrl, 'Modo:', fitMode);
+      if (showNotif) showNotification('✨', 'Papel de parede atualizado!');
+    } else {
+      wallpaperBg.src = '';
+      wallpaperBg.style.display = 'none';
+      wallpaperOverlay.style.display = 'none';
+      cloudDelete('pj_wallpaper');
+      cloudDelete('pj_wallpaper_fit');
+      console.log('✅ Papel de parede resetado para padrão');
+      if (showNotif) showNotification('🔄', 'Papel de parede resetado!');
+    }
+  }
+  
+  // Carregar wallpaper — servidor é a fonte primária
+  function applyWallpaperData(url, fit) {
+    setWallpaper(url, fit || 'cover', false);
+    document.getElementById('wallpaper-url-input').value = url;
+    document.getElementById('wallpaper-size').value = fit || 'cover';
+  }
+
+  (async () => {
+    const result = await cloudLoadAll();
+    if (result.data.pj_wallpaper) {
+      applyWallpaperData(result.data.pj_wallpaper, result.data.pj_wallpaper_fit);
+      console.log('✅ Wallpaper carregado do servidor');
+    }
+  })();
+
+  // ===== CONFIGURAÇÕES UI =====
+  const wallpaperUrlInput = document.getElementById('wallpaper-url-input');
+  const wallpaperSizeSelect = document.getElementById('wallpaper-size');
+  const wallpaperApplyBtn = document.getElementById('wallpaper-apply');
+  const wallpaperResetBtn = document.getElementById('wallpaper-reset');
+
+  document.getElementById('config-app-version').textContent = APP_VERSION;
+
+  wallpaperApplyBtn.addEventListener('click', () => {
+    const url = wallpaperUrlInput.value.trim();
+    const fitMode = wallpaperSizeSelect.value;
+    if (url) {
+      setWallpaper(url, fitMode);
+    } else {
+      showNotification('⚠️', 'Cole uma URL válida!');
+    }
+  });
+
+  wallpaperResetBtn.addEventListener('click', () => {
+    setWallpaper('');
+    wallpaperUrlInput.value = '';
+    wallpaperSizeSelect.value = 'cover';
+  });
+
+  wallpaperSizeSelect.addEventListener('change', () => {
+    const url = wallpaperUrlInput.value.trim();
+    if (url) {
+      setWallpaper(url, wallpaperSizeSelect.value);
+    }
+  });
+
+  // ===== WHATSAPP CHAT =====
+  let waChatUser = null;
+  let waLastMsgId = 0;
+  let waPollTimer = null;
+  let waUnreadTimer = null;
+  let waGroupChatId = null;
+  let waGroupLastMsgId = 0;
+  let waGroupPollTimer = null;
+  let waAvatarCache = {};
+
+  // Helper: get avatar HTML
+  function waAvatarHTML(username, avatarUrl, size) {
+    size = size || 36;
+    if (avatarUrl) {
+      return '<div class="wa-avatar" style="width:' + size + 'px;height:' + size + 'px;overflow:hidden;"><img src="' + escHTML(avatarUrl) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent=\'' + escHTML(username.charAt(0)) + '\'"></div>';
+    }
+    return '<div class="wa-avatar" style="width:' + size + 'px;height:' + size + 'px;">' + escHTML(username.charAt(0)) + '</div>';
+  }
+
+  // Tab switching (Conversas / Grupos)
+  document.getElementById('wa-tab-convos').addEventListener('click', () => {
+    document.getElementById('wa-tab-convos').classList.add('active');
+    document.getElementById('wa-tab-groups').classList.remove('active');
+    document.getElementById('wa-convos-panel').style.display = '';
+    document.getElementById('wa-groups-panel').style.display = 'none';
+  });
+  document.getElementById('wa-tab-groups').addEventListener('click', () => {
+    document.getElementById('wa-tab-groups').classList.add('active');
+    document.getElementById('wa-tab-convos').classList.remove('active');
+    document.getElementById('wa-groups-panel').style.display = '';
+    document.getElementById('wa-convos-panel').style.display = 'none';
+    loadGroups();
+  });
+
+  // Load conversations (contacts only - show convos with contacts)
+  async function loadConversations() {
+    if (!loggedInUser) return;
+    try {
+      const res = await fetch(API_URL + '/api/chat/conversations', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      const list = document.getElementById('wa-convos-list');
+      const empty = document.getElementById('wa-convos-empty');
+      list.innerHTML = '';
+      if (!data.conversations || data.conversations.length === 0) {
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+      data.conversations.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'wa-convo-item';
+        const preview = c.isMine ? 'Você: ' + c.lastMessage : c.lastMessage;
+        const time = waFormatTime(c.lastTime);
+        const avatarUrl = waAvatarCache[c.username] || '';
+        div.innerHTML =
+          waAvatarHTML(c.username, avatarUrl) +
+          '<div class="wa-convo-info"><div class="wa-convo-name">' + escHTML(c.username) + '</div>' +
+          '<div class="wa-convo-last">' + escHTML(preview) + '</div></div>' +
+          '<div class="wa-convo-right"><div class="wa-convo-time">' + time + '</div>' +
+          (c.unread > 0 ? '<div class="wa-convo-unread">' + c.unread + '</div>' : '') +
+          '</div>';
+        div.addEventListener('click', () => openChat(c.username));
+        list.appendChild(div);
+      });
+    } catch(e) { console.error('loadConversations error:', e); }
+  }
+
+  // Load groups
+  async function loadGroups() {
+    if (!loggedInUser) return;
+    try {
+      const res = await fetch(API_URL + '/api/groups', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      const list = document.getElementById('wa-groups-list');
+      const empty = document.getElementById('wa-groups-empty');
+      list.innerHTML = '';
+      if (!data.groups || data.groups.length === 0) {
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+      data.groups.forEach(g => {
+        const div = document.createElement('div');
+        div.className = 'wa-convo-item';
+        const lastPrev = g.last_sender ? (g.last_sender + ': ' + (g.last_message || '').substring(0, 40)) : 'Grupo criado';
+        const time = waFormatTime(g.last_time);
+        div.innerHTML =
+          '<div class="wa-avatar" style="background:linear-gradient(135deg,#128c7e,#075e54);"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>' +
+          '<div class="wa-convo-info"><div class="wa-convo-name">' + escHTML(g.name) + '</div>' +
+          '<div class="wa-convo-last">' + escHTML(lastPrev) + '</div></div>' +
+          '<div class="wa-convo-right"><div class="wa-convo-time">' + time + '</div>' +
+          '<div style="font-size:9px;opacity:0.3;">' + g.member_count + ' membros</div></div>';
+        div.addEventListener('click', () => openGroupChat(g.id, g.name));
+        list.appendChild(div);
+      });
+    } catch(e) { console.error('loadGroups error:', e); }
+  }
+
+  function escHTML(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function waFormatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'Z');
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) {
+      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  }
+
+  // Load contacts into avatar cache
+  async function loadContactsCache() {
+    if (!loggedInUser) return;
+    try {
+      const res = await fetch(API_URL + '/api/contacts', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      if (data.contacts) {
+        data.contacts.forEach(c => { waAvatarCache[c.username] = c.avatar_url || ''; });
+      }
+    } catch(e) {}
+  }
+
+  // Open individual chat
+  async function openChat(username) {
+    waChatUser = username;
+    waLastMsgId = 0;
+    document.getElementById('wa-chat-name').textContent = username;
+    const avatarUrl = waAvatarCache[username] || '';
+    const avatarEl = document.getElementById('wa-chat-avatar');
+    if (avatarUrl) {
+      avatarEl.innerHTML = '<img src="' + escHTML(avatarUrl) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent=\'' + escHTML(username.charAt(0)) + '\'">';
+    } else {
+      avatarEl.textContent = username.charAt(0);
+    }
+    document.getElementById('wa-chat-msgs').innerHTML = '';
+    document.getElementById('wa-chat-input').value = '';
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-chat').classList.add('active');
+    currentPage = 'wa-chat';
+
+    await fetchMessages(username, false);
+    startChatPolling();
+  }
+
+  async function fetchMessages(username, append) {
+    if (!loggedInUser) return;
+    try {
+      const url = API_URL + '/api/chat/messages/' + encodeURIComponent(username) + (waLastMsgId ? '?after=' + waLastMsgId : '');
+      const res = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      if (!data.messages) return;
+      const container = document.getElementById('wa-chat-msgs');
+      data.messages.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'wa-bubble ' + (m.mine ? 'mine' : 'theirs');
+        div.innerHTML = escHTML(m.content) + '<div class="wa-bubble-time">' + waFormatTime(m.created_at) + '</div>';
+        container.appendChild(div);
+        if (m.id > waLastMsgId) waLastMsgId = m.id;
+      });
+      if (data.messages.length > 0) {
+        container.scrollTop = container.scrollHeight;
+      }
+    } catch(e) { console.error('fetchMessages error:', e); }
+  }
+
+  // Send message (DM)
+  async function waSendMessage() {
+    if (!loggedInUser || !waChatUser) return;
+    const input = document.getElementById('wa-chat-input');
+    const content = input.value.trim();
+    if (!content) return;
+    input.value = '';
+    try {
+      const res = await fetch(API_URL + '/api/chat/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + loggedInUser.token
+        },
+        body: JSON.stringify({ to: waChatUser, content: content })
+      });
+      const data = await res.json();
+      if (data.success && data.message) {
+        const container = document.getElementById('wa-chat-msgs');
+        const div = document.createElement('div');
+        div.className = 'wa-bubble mine';
+        div.innerHTML = escHTML(data.message.content) + '<div class="wa-bubble-time">' + waFormatTime(data.message.created_at) + '</div>';
+        container.appendChild(div);
+        if (data.message.id > waLastMsgId) waLastMsgId = data.message.id;
+        container.scrollTop = container.scrollHeight;
+      }
+    } catch(e) { console.error('waSendMessage error:', e); }
+  }
+
+  document.getElementById('wa-chat-send').addEventListener('click', waSendMessage);
+  document.getElementById('wa-chat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); waSendMessage(); }
+  });
+
+  // Back from chat
+  document.getElementById('wa-chat-back').addEventListener('click', () => {
+    stopChatPolling();
+    waChatUser = null;
+    navigateTo('messages');
+  });
+
+  // ===== NEW CHAT (contacts only) =====
+  document.getElementById('wa-new-chat-btn').addEventListener('click', async () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-new').classList.add('active');
+    currentPage = 'wa-new';
+    await loadContactsList();
+  });
+
+  async function loadContactsList() {
+    if (!loggedInUser) return;
+    const list = document.getElementById('wa-contacts-list');
+    const empty = document.getElementById('wa-contacts-empty');
+    list.innerHTML = '';
+    try {
+      const res = await fetch(API_URL + '/api/contacts', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      if (!data.contacts || data.contacts.length === 0) {
+        empty.style.display = '';
+        empty.textContent = 'Nenhum contato. Adicione contatos no perfil.';
+        return;
+      }
+      empty.style.display = 'none';
+      data.contacts.forEach(c => {
+        waAvatarCache[c.username] = c.avatar_url || '';
+        const div = document.createElement('div');
+        div.className = 'wa-user-item';
+        const phoneText = c.phone ? c.phone : '';
+        div.innerHTML = waAvatarHTML(c.username, c.avatar_url, 36) +
+          '<div><div class="wa-user-item-name">' + escHTML(c.username) + '</div>' +
+          (phoneText ? '<div class="wa-user-item-sub" style="font-size:10px;opacity:0.4;">' + escHTML(phoneText) + '</div>' : '') +
+          '</div>';
+        div.addEventListener('click', () => openChat(c.username));
+        list.appendChild(div);
+      });
+    } catch(e) {
+      empty.style.display = '';
+      empty.textContent = 'Erro ao carregar contatos';
+    }
+  }
+
+  document.getElementById('wa-new-back').addEventListener('click', () => {
+    navigateTo('messages');
+  });
+
+  // ===== PROFILE =====
+  document.getElementById('wa-profile-btn').addEventListener('click', () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-profile').classList.add('active');
+    currentPage = 'wa-profile';
+    if (loggedInUser) {
+      document.getElementById('wa-my-name').textContent = loggedInUser.username;
+      document.getElementById('wa-my-phone').textContent = loggedInUser.phone ? '📞 ' + loggedInUser.phone : 'Sem telefone';
+      const myAv = document.getElementById('wa-my-avatar');
+      const savedUrl = loggedInUser.avatar_url || '';
+      if (savedUrl) {
+        myAv.innerHTML = '<img src="' + escHTML(savedUrl) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.textContent=\'' + escHTML(loggedInUser.username.charAt(0)) + '\'">' +
+          '<div style="position:absolute;bottom:-2px;right:-2px;background:#25d366;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>';
+      } else {
+        myAv.innerHTML = loggedInUser.username.charAt(0) +
+          '<div style="position:absolute;bottom:-2px;right:-2px;background:#25d366;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>';
+      }
+      document.getElementById('wa-avatar-input').value = savedUrl;
+    }
+  });
+
+  document.getElementById('wa-profile-back').addEventListener('click', () => navigateTo('messages'));
+
+  document.getElementById('wa-save-profile').addEventListener('click', async () => {
+    if (!loggedInUser) return;
+    const url = document.getElementById('wa-avatar-input').value.trim();
+    const msgEl = document.getElementById('wa-avatar-msg');
+    try {
+      const res = await fetch(API_URL + '/api/profile/avatar', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ avatar_url: url })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loggedInUser.avatar_url = url;
+        msgEl.textContent = 'Foto salva!';
+        msgEl.style.color = '#25d366';
+        msgEl.style.display = 'block';
+        setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+      } else {
+        msgEl.textContent = data.error || 'Erro';
+        msgEl.style.color = '#ff3b30';
+        msgEl.style.display = 'block';
+      }
+    } catch(e) {
+      msgEl.textContent = 'Erro de conexão';
+      msgEl.style.color = '#ff3b30';
+      msgEl.style.display = 'block';
+    }
+  });
+
+  // Manage contacts button -> go to manage contacts list
+  document.getElementById('wa-manage-contacts-btn').addEventListener('click', () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-manage-contacts').classList.add('active');
+    currentPage = 'wa-manage-contacts';
+    loadMyContactsList();
+  });
+
+  document.getElementById('wa-manage-back').addEventListener('click', () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-profile').classList.add('active');
+    currentPage = 'wa-profile';
+  });
+
+  // Load my contacts with delete button
+  async function loadMyContactsList() {
+    if (!loggedInUser) return;
+    const list = document.getElementById('wa-my-contacts-list');
+    const empty = document.getElementById('wa-my-contacts-empty');
+    list.innerHTML = '';
+    try {
+      const res = await fetch(API_URL + '/api/contacts', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      if (!data.contacts || data.contacts.length === 0) {
+        empty.style.display = '';
+        empty.textContent = 'Nenhum contato adicionado';
+        return;
+      }
+      empty.style.display = 'none';
+      data.contacts.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'wa-user-item';
+        div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;';
+        const phoneText = c.phone ? c.phone : 'Sem número';
+        div.innerHTML = waAvatarHTML(c.username, c.avatar_url, 36) +
+          '<div style="flex:1;min-width:0;"><div class="wa-user-item-name">' + escHTML(c.username) + '</div>' +
+          '<div class="wa-user-item-sub" style="font-size:10px;opacity:0.4;">' + escHTML(phoneText) + '</div></div>' +
+          '<button class="wa-del-btn" style="background:rgba(255,59,48,0.15);border:1px solid rgba(255,59,48,0.3);border-radius:8px;padding:6px 8px;cursor:pointer;flex-shrink:0;" title="Remover contato">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="#ff3b30"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
+        div.querySelector('.wa-del-btn').addEventListener('click', async (ev) => {
+          ev.stopPropagation();
+          if (!confirm('Remover ' + c.username + ' dos contatos?')) return;
+          try {
+            const r = await fetch(API_URL + '/api/contacts/' + encodeURIComponent(c.username), {
+              method: 'DELETE',
+              headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+            });
+            const d = await r.json();
+            if (d.success) {
+              div.remove();
+              delete waAvatarCache[c.username];
+              const remaining = list.querySelectorAll('.wa-user-item');
+              if (remaining.length === 0) {
+                empty.style.display = '';
+                empty.textContent = 'Nenhum contato adicionado';
+              }
+            }
+          } catch(err) {}
+        });
+        list.appendChild(div);
+      });
+    } catch(e) {
+      empty.style.display = '';
+      empty.textContent = 'Erro ao carregar';
+    }
+  }
+
+  // Add new contact button (from manage contacts page)
+  document.getElementById('wa-add-new-contact-btn').addEventListener('click', () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-add-contact').classList.add('active');
+    currentPage = 'wa-add-contact';
+    document.getElementById('wa-search-user').value = '';
+    document.getElementById('wa-search-results').innerHTML = '';
+  });
+
+  document.getElementById('wa-add-contact-back').addEventListener('click', () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-manage-contacts').classList.add('active');
+    currentPage = 'wa-manage-contacts';
+    loadMyContactsList();
+  });
+
+  // Search users to add as contact
+  let waSearchTimeout = null;
+  document.getElementById('wa-search-user').addEventListener('input', (e) => {
+    clearTimeout(waSearchTimeout);
+    const q = e.target.value.trim();
+    if (q.length < 2) { document.getElementById('wa-search-results').innerHTML = ''; return; }
+    waSearchTimeout = setTimeout(async () => {
+      try {
+        const res = await fetch(API_URL + '/api/contacts/search?q=' + encodeURIComponent(q), {
+          headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+        });
+        const data = await res.json();
+        const list = document.getElementById('wa-search-results');
+        list.innerHTML = '';
+        if (!data.users || data.users.length === 0) {
+          list.innerHTML = '<div style="text-align:center;opacity:0.4;font-size:11px;padding:16px;">Nenhum resultado</div>';
+          return;
+        }
+        data.users.forEach(u => {
+          const div = document.createElement('div');
+          div.className = 'wa-user-item';
+          div.innerHTML = waAvatarHTML(u.username, u.avatar_url, 32) +
+            '<div style="flex:1;"><div class="wa-user-item-name">' + escHTML(u.phone || 'Sem número') + '</div>' +
+            '<div class="wa-user-item-sub" style="font-size:10px;opacity:0.4;">' + escHTML(u.username) + '</div>' +
+            '</div>' +
+            '<button class="wa-add-btn" style="background:#25d366;border:none;border-radius:8px;padding:6px 10px;color:white;font-size:10px;font-weight:600;cursor:pointer;">+ Adicionar</button>';
+          div.querySelector('.wa-add-btn').addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            try {
+              const r = await fetch(API_URL + '/api/contacts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+                body: JSON.stringify({ username: u.username })
+              });
+              const d = await r.json();
+              if (d.success) {
+                ev.target.textContent = '✓ Adicionado';
+                ev.target.disabled = true;
+                ev.target.style.opacity = '0.5';
+                waAvatarCache[u.username] = u.avatar_url || '';
+              } else {
+                ev.target.textContent = d.error || 'Erro';
+                setTimeout(() => { ev.target.textContent = '+ Adicionar'; }, 2000);
+              }
+            } catch(err) { ev.target.textContent = 'Erro'; }
+          });
+          list.appendChild(div);
+        });
+      } catch(e) {}
+    }, 400);
+  });
+
+  // ===== CREATE GROUP =====
+  document.getElementById('wa-new-group-btn').addEventListener('click', async () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-create-group').classList.add('active');
+    currentPage = 'wa-create-group';
+    document.getElementById('wa-group-name').value = '';
+    document.getElementById('wa-group-msg').style.display = 'none';
+
+    // Load contacts for member selection
+    const list = document.getElementById('wa-group-contacts');
+    list.innerHTML = '';
+    try {
+      const res = await fetch(API_URL + '/api/contacts', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      if (!data.contacts || data.contacts.length === 0) {
+        list.innerHTML = '<div style="text-align:center;opacity:0.4;font-size:11px;padding:16px;">Adicione contatos primeiro</div>';
+        return;
+      }
+      data.contacts.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'wa-user-item';
+        div.dataset.username = c.username;
+        div.dataset.selected = 'false';
+        div.innerHTML = '<div class="wa-checkbox"></div>' +
+          waAvatarHTML(c.username, c.avatar_url, 32) +
+          '<div class="wa-user-item-name">' + escHTML(c.username) + '</div>';
+        div.addEventListener('click', () => {
+          const cb = div.querySelector('.wa-checkbox');
+          if (div.dataset.selected === 'true') {
+            div.dataset.selected = 'false';
+            cb.classList.remove('checked');
+          } else {
+            div.dataset.selected = 'true';
+            cb.classList.add('checked');
+          }
+        });
+        list.appendChild(div);
+      });
+    } catch(e) {}
+  });
+
+  document.getElementById('wa-create-group-back').addEventListener('click', () => navigateTo('messages'));
+
+  document.getElementById('wa-create-group-confirm').addEventListener('click', async () => {
+    const name = document.getElementById('wa-group-name').value.trim();
+    const msgEl = document.getElementById('wa-group-msg');
+    if (!name) {
+      msgEl.textContent = 'Digite o nome do grupo';
+      msgEl.style.color = '#ff3b30';
+      msgEl.style.display = 'block';
+      return;
+    }
+    const selected = [];
+    document.querySelectorAll('#wa-group-contacts .wa-user-item').forEach(item => {
+      if (item.dataset.selected === 'true') selected.push(item.dataset.username);
+    });
+    if (selected.length === 0) {
+      msgEl.textContent = 'Selecione pelo menos 1 membro';
+      msgEl.style.color = '#ff3b30';
+      msgEl.style.display = 'block';
+      return;
+    }
+    try {
+      const res = await fetch(API_URL + '/api/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ name, members: selected })
+      });
+      const data = await res.json();
+      if (data.success) {
+        msgEl.textContent = 'Grupo criado!';
+        msgEl.style.color = '#25d366';
+        msgEl.style.display = 'block';
+        setTimeout(() => { navigateTo('messages'); document.getElementById('wa-tab-groups').click(); }, 1000);
+      } else {
+        msgEl.textContent = data.error || 'Erro';
+        msgEl.style.color = '#ff3b30';
+        msgEl.style.display = 'block';
+      }
+    } catch(e) {
+      msgEl.textContent = 'Erro de conexão';
+      msgEl.style.color = '#ff3b30';
+      msgEl.style.display = 'block';
+    }
+  });
+
+  // ===== GROUP CHAT =====
+  async function openGroupChat(groupId, groupName) {
+    waGroupChatId = groupId;
+    waGroupLastMsgId = 0;
+    document.getElementById('wa-group-chat-name').textContent = groupName;
+    document.getElementById('wa-group-chat-msgs').innerHTML = '';
+    document.getElementById('wa-group-chat-input').value = '';
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('app-wa-group-chat').classList.add('active');
+    currentPage = 'wa-group-chat';
+
+    // Load members count
+    try {
+      const res = await fetch(API_URL + '/api/groups/' + groupId + '/members', {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      if (data.members) {
+        document.getElementById('wa-group-chat-members').textContent = data.members.map(m => m.username).join(', ');
+      }
+    } catch(e) {}
+
+    await fetchGroupMessages(groupId, false);
+    startGroupChatPolling();
+  }
+
+  async function fetchGroupMessages(groupId, append) {
+    if (!loggedInUser) return;
+    try {
+      const url = API_URL + '/api/groups/' + groupId + '/messages' + (waGroupLastMsgId ? '?after=' + waGroupLastMsgId : '');
+      const res = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+      });
+      const data = await res.json();
+      if (!data.messages) return;
+      const container = document.getElementById('wa-group-chat-msgs');
+      data.messages.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'wa-bubble ' + (m.mine ? 'mine' : 'theirs');
+        const senderHTML = m.mine ? '' : '<div class="wa-bubble-sender">' + escHTML(m.sender) + '</div>';
+        div.innerHTML = senderHTML + escHTML(m.content) + '<div class="wa-bubble-time">' + waFormatTime(m.created_at) + '</div>';
+        container.appendChild(div);
+        if (m.id > waGroupLastMsgId) waGroupLastMsgId = m.id;
+      });
+      if (data.messages.length > 0) {
+        container.scrollTop = container.scrollHeight;
+      }
+    } catch(e) { console.error('fetchGroupMessages error:', e); }
+  }
+
+  async function waGroupSendMessage() {
+    if (!loggedInUser || !waGroupChatId) return;
+    const input = document.getElementById('wa-group-chat-input');
+    const content = input.value.trim();
+    if (!content) return;
+    input.value = '';
+    try {
+      const res = await fetch(API_URL + '/api/groups/' + waGroupChatId + '/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ content })
+      });
+      const data = await res.json();
+      if (data.success && data.message) {
+        const container = document.getElementById('wa-group-chat-msgs');
+        const div = document.createElement('div');
+        div.className = 'wa-bubble mine';
+        div.innerHTML = escHTML(data.message.content) + '<div class="wa-bubble-time">' + waFormatTime(data.message.created_at) + '</div>';
+        container.appendChild(div);
+        if (data.message.id > waGroupLastMsgId) waGroupLastMsgId = data.message.id;
+        container.scrollTop = container.scrollHeight;
+      }
+    } catch(e) { console.error('waGroupSendMessage error:', e); }
+  }
+
+  document.getElementById('wa-group-chat-send').addEventListener('click', waGroupSendMessage);
+  document.getElementById('wa-group-chat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); waGroupSendMessage(); }
+  });
+
+  document.getElementById('wa-group-chat-back').addEventListener('click', () => {
+    stopGroupChatPolling();
+    waGroupChatId = null;
+    navigateTo('messages');
+    document.getElementById('wa-tab-groups').click();
+  });
+
+  function startGroupChatPolling() {
+    stopGroupChatPolling();
+    waGroupPollTimer = setInterval(() => {
+      if (waGroupChatId && currentPage === 'wa-group-chat') {
+        fetchGroupMessages(waGroupChatId, true);
+      }
+    }, 3000);
+  }
+
+  function stopGroupChatPolling() {
+    if (waGroupPollTimer) { clearInterval(waGroupPollTimer); waGroupPollTimer = null; }
+  }
+
+  // Polling for new messages in open chat
+  function startChatPolling() {
+    stopChatPolling();
+    waPollTimer = setInterval(() => {
+      if (waChatUser && currentPage === 'wa-chat') {
+        fetchMessages(waChatUser, true);
+      }
+    }, 3000);
+  }
+
+  function stopChatPolling() {
+    if (waPollTimer) { clearInterval(waPollTimer); waPollTimer = null; }
+  }
+
+  // Global unread polling (for badge)
+  let waLastUnreadCount = 0;
+
+  function startUnreadPolling() {
+    if (waUnreadTimer) return;
+    waUnreadTimer = setInterval(async () => {
+      if (!loggedInUser) return;
+      try {
+        const res = await fetch(API_URL + '/api/chat/unread', {
+          headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+        });
+        const data = await res.json();
+        const chatUnread = data.unread || 0;
+
+        // Notificar se chegou mensagem nova (e não está no chat)
+        if (chatUnread > waLastUnreadCount && currentPage !== 'wa-chat') {
+          showNotification('💬', 'Nova mensagem no WhatsApp');
+        }
+        waLastUnreadCount = chatUnread;
+
+        if (chatUnread > 0) {
+          msgBadge.textContent = chatUnread;
+          msgBadge.classList.add('visible');
+        } else {
+          msgBadge.classList.remove('visible');
+        }
+      } catch(e) {}
+    }, 5000);
+  }
+
+
+</script>
+</body>
+</html>
