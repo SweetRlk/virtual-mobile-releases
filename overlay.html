@@ -3821,6 +3821,12 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
         body: JSON.stringify({ to: username, sdp_offer: JSON.stringify(offer) })
       });
+      if (!res.ok || !res.headers.get('content-type')?.includes('json')) {
+        stream.getTracks().forEach(t => t.stop());
+        pc.close();
+        showNotification('📞', 'Servidor não suporta ligações ainda');
+        return;
+      }
       const data = await res.json();
       if (!data.success) {
         stream.getTracks().forEach(t => t.stop());

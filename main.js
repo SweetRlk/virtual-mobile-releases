@@ -14,6 +14,8 @@ const APP_VERSION = require('./package.json').version;
 // Enable audio capture for VoIP
 app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer');
 app.commandLine.appendSwitch('use-fake-ui-for-media-stream');
+app.commandLine.appendSwitch('enable-media-stream');
+app.commandLine.appendSwitch('allow-file-access-from-files');
 
 const user32 = koffi.load("user32.dll");
 const GetForegroundWindow = user32.func("void* __stdcall GetForegroundWindow()");
