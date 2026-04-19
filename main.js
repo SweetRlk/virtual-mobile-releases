@@ -11,6 +11,10 @@ const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), '
 const API_URL = config.api.url;
 const APP_VERSION = require('./package.json').version;
 
+// Enable audio capture for VoIP
+app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer');
+app.commandLine.appendSwitch('use-fake-ui-for-media-stream');
+
 const user32 = koffi.load("user32.dll");
 const GetForegroundWindow = user32.func("void* __stdcall GetForegroundWindow()");
 const GetWindowTextW = user32.func("int __stdcall GetWindowTextW(void*, uint16_t*, int)");
@@ -122,6 +126,10 @@ app.whenReady().then(() => {
     } else {
       callback(false);
     }
+  });
+  win.webContents.session.setPermissionCheckHandler((webContents, permission) => {
+    if (permission === 'media') return true;
+    return false;
   });
 
   ipcMain.on("set-ignore-mouse", (e, ignore) => {
