@@ -26,7 +26,6 @@ function getHwid() {
     if (!guid) throw new Error("MachineGuid not found");
     cachedHwid = require("crypto").createHash("sha256").update(guid).digest("hex").substring(0, 32);
   } catch (e) {
-    console.warn("⚠️ Erro ao gerar HWID:", e.message);
     cachedHwid = "unknown-" + require("crypto").randomBytes(12).toString("hex");
   }
   return cachedHwid;
@@ -42,7 +41,6 @@ function getGameInFocus() {
     const title = buf.toString("utf16le", 0, len * 2);
     return /ets2|euro truck|simulator/i.test(title);
   } catch (e) {
-    console.warn("⚠️ Erro ao detectar janela:", e.message);
     return true;
   }
 }
@@ -117,6 +115,15 @@ app.whenReady().then(() => {
 
   win.setIgnoreMouseEvents(true, { forward: true });
 
+  // Allow microphone access for VoIP calls
+  win.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
+
   ipcMain.on("set-ignore-mouse", (e, ignore) => {
     if (interactMode) return;
     if (ignore) {
@@ -166,7 +173,6 @@ app.whenReady().then(() => {
       const pngBuffer = image.toPNG();
       return pngBuffer.toString('base64');
     } catch (e) {
-      console.error('Erro ao capturar nota:', e.message);
       return null;
     } finally {
       if (captureWin && !captureWin.isDestroyed()) captureWin.destroy();
@@ -228,7 +234,6 @@ app.whenReady().then(() => {
   });
 
   autoUpdater.on('error', (err) => {
-    console.warn('Auto-update error:', err.message);
   });
 
   ipcMain.on('install-update', () => {

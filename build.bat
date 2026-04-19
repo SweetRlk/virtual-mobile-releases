@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
-echo Compilando ETS2 Overlay...
+echo Compilando Virtual Mobile...
 npm run build
 echo.
-echo Pronto! Instalador em: dist\ETS2 Overlay Setup 1.0.0.exe
+echo Pronto! Instalador gerado na pasta dist\
 pause

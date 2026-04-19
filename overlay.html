@@ -91,11 +91,7 @@
   }
   #statusbar:active { cursor: grabbing; }
   .sb-left { display: flex; align-items: center; gap: 4px; }
-  .sb-center { font-size: 11px; font-weight: 600; }
   .sb-right { display: flex; align-items: center; gap: 4px; font-size: 10px; }
-  #power-btn { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.7; border-radius: 6px; transition: background 0.2s, opacity 0.2s; }
-  #power-btn:hover { background: rgba(255,255,255,0.08); opacity: 1; }
-  #power-btn svg { display: block; }
   .signal-bars { display: flex; align-items: flex-end; gap: 1px; height: 10px; }
 
 
@@ -338,6 +334,52 @@
   .wa-send-btn:active { transform: scale(0.9); }
   .wa-send-btn:hover { background: #20bd5a; }
 
+  /* Call button in chat header */
+  .wa-call-btn {
+    margin-left: auto; width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: rgba(37,211,102,0.15); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .wa-call-btn:hover { background: rgba(37,211,102,0.3); }
+  .wa-call-btn:active { transform: scale(0.9); }
+
+  /* Call screen overlay */
+  .wa-call-screen {
+    position: absolute; inset: 0; z-index: 200;
+    background: linear-gradient(180deg, #1a3a2a 0%, #0a1f15 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; color: white; animation: callFadeIn 0.3s ease;
+  }
+  @keyframes callFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .wa-call-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, #128c7e, #25d366);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 700; color: white; overflow: hidden;
+  }
+  .wa-call-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .wa-call-name { font-size: 20px; font-weight: 700; margin-top: 8px; }
+  .wa-call-status-text { font-size: 12px; opacity: 0.6; }
+  .wa-call-timer { font-size: 16px; font-family: monospace; opacity: 0.8; }
+  .wa-call-actions { display: flex; gap: 24px; margin-top: 24px; }
+  .wa-call-action-btn {
+    width: 52px; height: 52px; border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+  }
+  .wa-call-action-btn:active { transform: scale(0.9); }
+  .wa-call-end { background: #e53935; }
+  .wa-call-accept { background: #25d366; }
+  .wa-call-reject { background: #e53935; }
+  .wa-call-mute { background: rgba(255,255,255,0.15); }
+  .wa-call-mute.active { background: rgba(255,255,255,0.35); }
+  @keyframes callPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0.4); }
+    50% { box-shadow: 0 0 0 16px rgba(37,211,102,0); }
+  }
+  .wa-call-avatar.ringing { animation: callPulse 1.5s ease infinite; }
+
   /* User picker modal */
   .wa-user-list { padding: 8px 14px; }
   .wa-user-item {
@@ -361,13 +403,6 @@
   .route-cargo { font-size: 11px; opacity: 0.4; margin-top: 4px; }
 
   /* ===== MAP ===== */
-  #map-canvas {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border-radius: 8px;
-    cursor: crosshair;
-  }
   .map-info {
     position: absolute;
     bottom: 12px;
@@ -579,9 +614,6 @@
   .nf-list-valor.negativo { color: #ff3b30; }
 
   /* ===== YOUTUBE APP ===== */
-  .yt-search-wrap {
-    display: flex; gap: 6px; margin-bottom: 10px;
-  }
   .yt-input {
     flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px; padding: 8px 10px; font-size: 11px; color: white;
@@ -608,57 +640,6 @@
     background-color: #4285f4 !important;
   }
   
-  .yt-btn {
-    background: #ff0000; border: none; border-radius: 10px; padding: 0 12px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-  }
-  .yt-btn:hover { background: #cc0000; }
-  .yt-btn:active { background: #aa0000; }
-  .yt-player-wrap {
-    position: relative; width: 100%; padding-bottom: 56.25%; /* 16:9 */
-    background: #111; border-radius: 12px; overflow: hidden; margin-bottom: 10px;
-  }
-  .yt-player-wrap iframe, .yt-player-wrap webview {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
-  }
-  .yt-placeholder {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 8px; opacity: 0.3;
-  }
-  .yt-placeholder svg { opacity: 0.5; }
-  .yt-placeholder span { font-size: 10px; }
-  .yt-history-title {
-    font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px;
-    margin-bottom: 6px;
-  }
-  .yt-history-item {
-    background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px 10px;
-    margin-bottom: 4px; cursor: pointer; transition: background 0.15s;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .yt-history-item:active { background: rgba(255,255,255,0.08); }
-  .yt-history-thumb {
-    width: 48px; height: 28px; border-radius: 4px; background: #222;
-    flex-shrink: 0; overflow: hidden;
-  }
-  .yt-history-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .yt-history-text { font-size: 10px; line-height: 1.3; overflow: hidden;
-    line-clamp: 2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .yt-now-playing {
-    display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
-    padding: 6px 8px; background: rgba(255,0,0,0.1); border-radius: 8px;
-    border: 1px solid rgba(255,0,0,0.2);
-  }
-  .yt-now-dot {
-    width: 6px; height: 6px; border-radius: 50%; background: #ff0000;
-    animation: ytPulse 1.5s infinite;
-  }
-  @keyframes ytPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .yt-now-text { font-size: 10px; opacity: 0.7; flex: 1; overflow: hidden;
-    white-space: nowrap; text-overflow: ellipsis; }
-
   .resumo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
   .resumo-card {
     background: rgba(255,255,255,0.06);
@@ -1009,7 +990,6 @@
     <div class="sb-left">
       <span id="sb-time">--:--</span>
     </div>
-    <div class="sb-center"></div>
     <div class="sb-right">
       <div class="signal-bars">
         <div class="signal-bar"></div><div class="signal-bar"></div>
@@ -1173,6 +1153,24 @@
           <div class="wa-chat-name" id="wa-chat-name">...</div>
           <div class="wa-chat-status" id="wa-chat-status">online</div>
         </div>
+        <button class="wa-call-btn" id="wa-call-start-btn" title="Ligar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#25d366"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+        </button>
+      </div>
+      <!-- Call screen (hidden by default) -->
+      <div class="wa-call-screen" id="wa-call-screen" style="display:none;">
+        <div class="wa-call-avatar" id="wa-call-avatar"></div>
+        <div class="wa-call-name" id="wa-call-name"></div>
+        <div class="wa-call-status-text" id="wa-call-status-text">Chamando...</div>
+        <div class="wa-call-timer" id="wa-call-timer" style="display:none;">00:00</div>
+        <div class="wa-call-actions" id="wa-call-actions">
+          <button class="wa-call-action-btn wa-call-mute" id="wa-call-mute-btn" title="Mudo" style="display:none;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+          </button>
+          <button class="wa-call-action-btn wa-call-end" id="wa-call-end-btn" title="Encerrar">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.57 8.55 7.58 7 12 7s8.43 1.55 11.71 4.72c.18.18.29.44.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+          </button>
+        </div>
       </div>
       <div class="wa-chat-messages" id="wa-chat-msgs"></div>
       <div class="wa-input-bar">
@@ -1288,6 +1286,21 @@
         <input type="text" class="wa-input" id="wa-group-chat-input" placeholder="Mensagem" maxlength="500" autocomplete="off">
         <button class="wa-send-btn" id="wa-group-chat-send">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- INCOMING CALL OVERLAY (global) -->
+    <div id="wa-incoming-call" class="wa-call-screen" style="display:none; position:fixed; z-index:9999;">
+      <div class="wa-call-avatar ringing" id="wa-incoming-avatar"></div>
+      <div class="wa-call-name" id="wa-incoming-name"></div>
+      <div class="wa-call-status-text">Chamada recebida...</div>
+      <div class="wa-call-actions">
+        <button class="wa-call-action-btn wa-call-reject" id="wa-incoming-reject" title="Rejeitar">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.57 8.55 7.58 7 12 7s8.43 1.55 11.71 4.72c.18.18.29.44.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+        </button>
+        <button class="wa-call-action-btn wa-call-accept" id="wa-incoming-accept" title="Atender">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
         </button>
       </div>
     </div>
@@ -1590,13 +1603,8 @@
     try {
       API_URL = await eAPI.getApiUrl();
       APP_VERSION = await eAPI.getAppVersion();
-    } catch(e) { console.error('Failed to load config:', e); }
+    } catch(e) { /* config load failed */ }
   })();
-
-  function userKey(key) {
-    const u = loggedInUser ? loggedInUser.username : '';
-    return u ? key + '_' + u : key;
-  }
 
   (function initLogin() {
     const loginScreen = document.getElementById('login-screen');
@@ -1673,6 +1681,7 @@
         loadBankData();
         loadWallpaper();
         startUnreadPolling();
+        startIncomingCallPolling();
       } catch (err) {
         setError('Servidor offline');
         pin = '';
@@ -1719,12 +1728,6 @@
     });
   })();
 
-  // Discord user ID (recebido do main process)
-  let discordUserId = '';
-  eAPI.onDiscordConfig((data) => {
-    discordUserId = data.userDiscordId || '';
-  });
-
   // Armazenar dados atuais de telemetry para usar com pedágio
   let currentTelemetryData = {
     citySrc: 'Nenhum',
@@ -1735,14 +1738,12 @@
 
   // Variáveis extras para controle de frete (anti-duplicata)
   let lastTelemetryData = null;
-  let _prevJobFinished = null;
   let lastFreteTimestamp = 0;
   
   // Listener para event-transition
   eAPI.onEventTransition((data) => {
     
     if (!data || !data.event || !data.type) {
-      console.warn('Dados inválidos:', data);
       return;
     }
 
@@ -1789,7 +1790,6 @@
     if (data.event === 'jobFinished' && (data.type === 'START' || data.type === 'END')) {
       const t = data.telemetry || {};
       const freteData = { ...lastTelemetryData, ...t };
-      console.log('[FRETE] event-transition jobFinished', data.type, '— chamando finalizarFrete', freteData.jobDeliveredRevenue, freteData.jobIncome);
       finalizarFrete(freteData);
     }
   });
@@ -1804,7 +1804,6 @@
     const sbTime = document.getElementById('sb-time');
     
     if (!toastEl || !toastIcon || !toastMsg) {
-      console.warn('Elementos de notificação ainda não prontos');
       return;
     }
     
@@ -1840,7 +1839,6 @@
     window.msgCount = (window.msgCount || 0) + 1;
     notifBadge.textContent = window.msgCount;
     notifBadge.classList.add('visible');
-    console.log('Notificação:', icon, text);
   }
   
   const phone = document.getElementById('phone');
@@ -1939,11 +1937,6 @@
     phone.classList.add('powered-off');
     toggleBtn.classList.add('visible');
   }
-
-  document.getElementById('power-btn')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    eAPI.powerOff();
-  });
 
   function showPhone() {
     if (powerOff) {
@@ -2315,11 +2308,9 @@
           const data = JSON.parse(result.value);
           if (Array.isArray(data.notas) && data.notas.length) {
             applyNotasData(data);
-            console.log('✅ Notas carregadas do servidor:', notas.length, 'notas');
           }
-        } catch(e) { console.warn('Erro parsing notas do servidor', e); }
+        } catch(e) { /* parse error */ }
       } else if (!result.online) {
-        console.warn('⚠️ Servidor indisponível — sem dados para carregar');
       }
     });
   }
@@ -2339,8 +2330,6 @@
     updateNotasSummary();
     loadSavedNotas();
   }
-
-  loadSavedNotas();
 
   function getDate() {
     const d = new Date();
@@ -2515,7 +2504,7 @@
       '<!-- FOOTER -->' +
       '<div class="dacte-footer">' +
         '<div class="dacte-stamp ' + (isApproved ? 'approved' : 'deficit') + '">' + (isApproved ? '✓ APROVADO' : '✗ DÉFICIT') + '</div>' +
-        '<div class="dacte-obs">Documento sem valor fiscal — Emitido eletronicamente</div>' +
+        '<div class="dacte-obs">Documento de valor fiscal — Emitido eletronicamente</div>' +
       '</div>' +
     '</div>';
   }
@@ -2640,7 +2629,6 @@
       const html = buildDacteStandaloneHtml(nota);
       const base64Png = await eAPI.captureNotaImage(html);
       if (!base64Png) {
-        console.warn('Falha ao capturar imagem da nota');
         // Fallback: enviar texto
         fetch(API_URL + '/api/discord/nota', {
           method: 'POST',
@@ -2655,7 +2643,6 @@
         body: JSON.stringify({ image: base64Png, numero: nota.numero })
       });
     } catch (err) {
-      console.warn('Erro ao enviar nota como imagem:', err);
     }
   }
 
@@ -2745,9 +2732,6 @@
         plannedDistanceKm: data.plannedDistanceKm || 0,
       };
     }
-
-    // Job finish detection (moved to telemetry handler with _prevJobFinished)
-    // Keep legacy check here for tollgate events only
 
     // Combustível crítico < 20%
     const fuelPctAlert = data.fuelCapacity > 0 ? (data.fuel / data.fuelCapacity) * 100 : 100;
@@ -2875,7 +2859,6 @@
       const txData = await txRes.json();
       updateBankDisplay(balData.balance || 0, txData.transactions || []);
     } catch (err) {
-      console.warn('Erro carregando dados bancários:', err);
     }
   }
 
@@ -2892,7 +2875,6 @@
         updateBankDisplay(data.balance, null);
       }
     } catch (err) {
-      console.warn('Erro ao depositar:', err);
     }
   }
 
@@ -2970,16 +2952,6 @@
     }
 
     lastTelemetryData = data;
-
-    // Job finish detection via _prevJobFinished (fallback — trigger principal é o event-transition)
-    if (_prevJobFinished === null) {
-      _prevJobFinished = data.jobFinished;
-    } else if (_prevJobFinished === 0 && data.jobFinished >= 1) {
-      console.log('[FRETE] telemetry handler detectou jobFinished 0→1 (fallback)', data.jobDeliveredRevenue, data.jobIncome);
-      finalizarFrete(data);
-    }
-    _prevJobFinished = data.jobFinished;
-    prevEvents.jobFinished = data.jobFinished;
 
     // Atualizar dados de localização para usar em pedágio
     currentTelemetryData = {
@@ -3084,7 +3056,6 @@
       wallpaperOverlay.style.display = 'block';
       cloudSave('pj_wallpaper', imageUrl);
       cloudSave('pj_wallpaper_fit', fitMode);
-      console.log('✅ Papel de parede alterado:', imageUrl, 'Modo:', fitMode);
       if (showNotif) showNotification('✨', 'Papel de parede atualizado!');
     } else {
       wallpaperBg.src = '';
@@ -3092,7 +3063,6 @@
       wallpaperOverlay.style.display = 'none';
       cloudDelete('pj_wallpaper');
       cloudDelete('pj_wallpaper_fit');
-      console.log('✅ Papel de parede resetado para padrão');
       if (showNotif) showNotification('🔄', 'Papel de parede resetado!');
     }
   }
@@ -3111,7 +3081,6 @@
     const result = await cloudLoadAll();
     if (result.data.pj_wallpaper) {
       applyWallpaperData(result.data.pj_wallpaper, result.data.pj_wallpaper_fit);
-      console.log('✅ Wallpaper carregado do servidor');
     }
   }
 
@@ -3212,7 +3181,7 @@
         div.addEventListener('click', () => openChat(c.username));
         list.appendChild(div);
       });
-    } catch(e) { console.error('loadConversations error:', e); }
+    } catch(e) { /* loadConversations error */ }
   }
 
   // Load groups
@@ -3245,7 +3214,7 @@
         div.addEventListener('click', () => openGroupChat(g.id, g.name));
         list.appendChild(div);
       });
-    } catch(e) { console.error('loadGroups error:', e); }
+    } catch(e) { /* loadGroups error */ }
   }
 
   function escHTML(s) {
@@ -3321,7 +3290,7 @@
       if (data.messages.length > 0) {
         container.scrollTop = container.scrollHeight;
       }
-    } catch(e) { console.error('fetchMessages error:', e); }
+    } catch(e) { /* fetchMessages error */ }
   }
 
   // Send message (DM)
@@ -3350,7 +3319,7 @@
         if (data.message.id > waLastMsgId) waLastMsgId = data.message.id;
         container.scrollTop = container.scrollHeight;
       }
-    } catch(e) { console.error('waSendMessage error:', e); }
+    } catch(e) { /* waSendMessage error */ }
   }
 
   document.getElementById('wa-chat-send').addEventListener('click', waSendMessage);
@@ -3736,7 +3705,7 @@
       if (data.messages.length > 0) {
         container.scrollTop = container.scrollHeight;
       }
-    } catch(e) { console.error('fetchGroupMessages error:', e); }
+    } catch(e) { /* fetchGroupMessages error */ }
   }
 
   async function waGroupSendMessage() {
@@ -3761,7 +3730,7 @@
         if (data.message.id > waGroupLastMsgId) waGroupLastMsgId = data.message.id;
         container.scrollTop = container.scrollHeight;
       }
-    } catch(e) { console.error('waGroupSendMessage error:', e); }
+    } catch(e) { /* waGroupSendMessage error */ }
   }
 
   document.getElementById('wa-group-chat-send').addEventListener('click', waGroupSendMessage);
@@ -3802,6 +3771,331 @@
   function stopChatPolling() {
     if (waPollTimer) { clearInterval(waPollTimer); waPollTimer = null; }
   }
+
+  // ===== VOIP CALL SYSTEM =====
+  let callState = null; // { id, peer, role:'caller'|'callee', pc, stream, startTime, muted }
+  let callPollTimer = null;
+  let callIncomingPollTimer = null;
+  let callIceQueue = [];
+  let callIceSent = 0;
+
+  const STUN_CONFIG = { iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' }
+  ]};
+
+  function callAvatarHTML(name, avatarUrl) {
+    if (avatarUrl) return `<img src="${avatarUrl}" alt="">`;
+    return (name || '?')[0].toUpperCase();
+  }
+
+  // --- Start outgoing call ---
+  async function startCall(username) {
+    if (callState) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const pc = new RTCPeerConnection(STUN_CONFIG);
+      stream.getTracks().forEach(t => pc.addTrack(t, stream));
+
+      // Collect ICE candidates
+      callIceQueue = [];
+      pc.onicecandidate = (e) => {
+        if (e.candidate) callIceQueue.push(e.candidate);
+      };
+
+      // When remote audio arrives
+      pc.ontrack = (e) => {
+        const audio = document.createElement('audio');
+        audio.srcObject = e.streams[0];
+        audio.autoplay = true;
+        audio.id = 'wa-call-remote-audio';
+        document.body.appendChild(audio);
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // Send call to server
+      const res = await fetch(API_URL + '/api/call/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ to: username, sdp_offer: JSON.stringify(offer) })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        stream.getTracks().forEach(t => t.stop());
+        pc.close();
+        showNotification('📞', data.error || 'Erro ao ligar');
+        return;
+      }
+
+      callState = { id: data.call_id, peer: username, role: 'caller', pc, stream, startTime: null, muted: false };
+      showCallScreen(username, 'calling');
+      startCallPolling();
+
+      // Send ICE candidates to server periodically
+      callIceSent = 0;
+      const iceSender = setInterval(async () => {
+        if (!callState || callState.id !== data.call_id) { clearInterval(iceSender); return; }
+        while (callIceSent < callIceQueue.length) {
+          await fetch(API_URL + '/api/call/ice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+            body: JSON.stringify({ call_id: callState.id, candidate: callIceQueue[callIceSent] })
+          });
+          callIceSent++;
+        }
+      }, 1000);
+
+    } catch (err) {
+      showNotification('🎤', 'Erro ao acessar microfone');
+    }
+  }
+
+  // --- Poll call status (caller side) ---
+  function startCallPolling() {
+    stopCallPolling();
+    callPollTimer = setInterval(async () => {
+      if (!callState) { stopCallPolling(); return; }
+      try {
+        const res = await fetch(API_URL + '/api/call/status/' + callState.id, {
+          headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+        });
+        const data = await res.json();
+
+        if (data.status === 'accepted' && callState.role === 'caller') {
+          // Callee answered — set remote description + ICE
+          if (data.sdp_answer && !callState.pc.remoteDescription) {
+            await callState.pc.setRemoteDescription(JSON.parse(data.sdp_answer));
+          }
+          // Add remote ICE candidates
+          if (data.ice_candidates) {
+            for (const c of data.ice_candidates) {
+              try { await callState.pc.addIceCandidate(c); } catch(_) {}
+            }
+          }
+          if (!callState.startTime) {
+            callState.startTime = Date.now();
+            showCallScreen(callState.peer, 'connected');
+          }
+        } else if (data.status === 'accepted' && callState.role === 'callee') {
+          // Add remote ICE candidates (callee side)
+          if (data.ice_candidates) {
+            for (const c of data.ice_candidates) {
+              try { await callState.pc.addIceCandidate(c); } catch(_) {}
+            }
+          }
+        } else if (data.status === 'rejected') {
+          showNotification('📞', 'Chamada recusada');
+          endCallLocal();
+        } else if (data.status === 'ended') {
+          showNotification('📞', 'Chamada encerrada');
+          endCallLocal();
+        }
+      } catch(e) {}
+    }, 1500);
+  }
+
+  function stopCallPolling() {
+    if (callPollTimer) { clearInterval(callPollTimer); callPollTimer = null; }
+  }
+
+  // --- Show call UI ---
+  function showCallScreen(peerName, state) {
+    const screen = document.getElementById('wa-call-screen');
+    const avatar = document.getElementById('wa-call-avatar');
+    const name = document.getElementById('wa-call-name');
+    const statusText = document.getElementById('wa-call-status-text');
+    const timer = document.getElementById('wa-call-timer');
+    const muteBtn = document.getElementById('wa-call-mute-btn');
+
+    const avatarUrl = waAvatarCache[peerName] || '';
+    avatar.innerHTML = callAvatarHTML(peerName, avatarUrl);
+    avatar.classList.toggle('ringing', state === 'calling');
+    name.textContent = peerName;
+
+    if (state === 'calling') {
+      statusText.textContent = 'Chamando...';
+      statusText.style.display = '';
+      timer.style.display = 'none';
+      muteBtn.style.display = 'none';
+    } else if (state === 'connected') {
+      statusText.style.display = 'none';
+      timer.style.display = '';
+      muteBtn.style.display = '';
+      // Start timer update
+      const timerUpdate = setInterval(() => {
+        if (!callState || !callState.startTime) { clearInterval(timerUpdate); return; }
+        const elapsed = Math.floor((Date.now() - callState.startTime) / 1000);
+        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const secs = String(elapsed % 60).padStart(2, '0');
+        timer.textContent = mins + ':' + secs;
+      }, 500);
+    }
+
+    screen.style.display = '';
+  }
+
+  function hideCallScreen() {
+    document.getElementById('wa-call-screen').style.display = 'none';
+    const audio = document.getElementById('wa-call-remote-audio');
+    if (audio) audio.remove();
+  }
+
+  // --- End call (local cleanup) ---
+  function endCallLocal() {
+    stopCallPolling();
+    if (callState) {
+      if (callState.stream) callState.stream.getTracks().forEach(t => t.stop());
+      if (callState.pc) callState.pc.close();
+    }
+    callState = null;
+    hideCallScreen();
+    hideIncomingCall();
+  }
+
+  // --- End call (notify server + cleanup) ---
+  async function endCall() {
+    if (!callState) return;
+    try {
+      await fetch(API_URL + '/api/call/end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ call_id: callState.id })
+      });
+    } catch(e) {}
+    endCallLocal();
+  }
+
+  // --- Toggle mute ---
+  function toggleCallMute() {
+    if (!callState || !callState.stream) return;
+    callState.muted = !callState.muted;
+    callState.stream.getAudioTracks().forEach(t => { t.enabled = !callState.muted; });
+    document.getElementById('wa-call-mute-btn').classList.toggle('active', callState.muted);
+  }
+
+  // --- Incoming call handling ---
+  function showIncomingCall(callData) {
+    const el = document.getElementById('wa-incoming-call');
+    document.getElementById('wa-incoming-avatar').innerHTML = callAvatarHTML(callData.caller, callData.avatar);
+    document.getElementById('wa-incoming-name').textContent = callData.caller;
+    el.style.display = '';
+    el.dataset.callId = callData.id;
+    el.dataset.sdpOffer = callData.sdp_offer;
+    el.dataset.caller = callData.caller;
+  }
+
+  function hideIncomingCall() {
+    document.getElementById('wa-incoming-call').style.display = 'none';
+  }
+
+  async function acceptIncomingCall() {
+    const el = document.getElementById('wa-incoming-call');
+    const callId = parseInt(el.dataset.callId);
+    const sdpOffer = el.dataset.sdpOffer;
+    const callerName = el.dataset.caller;
+    hideIncomingCall();
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const pc = new RTCPeerConnection(STUN_CONFIG);
+      stream.getTracks().forEach(t => pc.addTrack(t, stream));
+
+      callIceQueue = [];
+      callIceSent = 0;
+      pc.onicecandidate = (e) => {
+        if (e.candidate) callIceQueue.push(e.candidate);
+      };
+
+      pc.ontrack = (e) => {
+        const audio = document.createElement('audio');
+        audio.srcObject = e.streams[0];
+        audio.autoplay = true;
+        audio.id = 'wa-call-remote-audio';
+        document.body.appendChild(audio);
+      };
+
+      await pc.setRemoteDescription(JSON.parse(sdpOffer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      await fetch(API_URL + '/api/call/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ call_id: callId, accept: true, sdp_answer: JSON.stringify(answer) })
+      });
+
+      callState = { id: callId, peer: callerName, role: 'callee', pc, stream, startTime: Date.now(), muted: false };
+      showCallScreen(callerName, 'connected');
+      startCallPolling();
+
+      // Send ICE candidates
+      const iceSender = setInterval(async () => {
+        if (!callState || callState.id !== callId) { clearInterval(iceSender); return; }
+        while (callIceSent < callIceQueue.length) {
+          await fetch(API_URL + '/api/call/ice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+            body: JSON.stringify({ call_id: callState.id, candidate: callIceQueue[callIceSent] })
+          });
+          callIceSent++;
+        }
+      }, 1000);
+
+    } catch (err) {
+      showNotification('🎤', 'Erro ao acessar microfone');
+      await fetch(API_URL + '/api/call/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ call_id: callId, accept: false })
+      });
+    }
+  }
+
+  async function rejectIncomingCall() {
+    const el = document.getElementById('wa-incoming-call');
+    const callId = parseInt(el.dataset.callId);
+    hideIncomingCall();
+    try {
+      await fetch(API_URL + '/api/call/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + loggedInUser.token },
+        body: JSON.stringify({ call_id: callId, accept: false })
+      });
+    } catch(e) {}
+  }
+
+  // Poll for incoming calls (runs while logged in)
+  function startIncomingCallPolling() {
+    stopIncomingCallPolling();
+    callIncomingPollTimer = setInterval(async () => {
+      if (!loggedInUser || callState) return;
+      try {
+        const res = await fetch(API_URL + '/api/call/incoming', {
+          headers: { 'Authorization': 'Bearer ' + loggedInUser.token }
+        });
+        const data = await res.json();
+        if (data.call && document.getElementById('wa-incoming-call').style.display === 'none') {
+          showIncomingCall(data.call);
+          showNotification('📞', data.call.caller + ' está ligando...');
+        }
+      } catch(e) {}
+    }, 2000);
+  }
+
+  function stopIncomingCallPolling() {
+    if (callIncomingPollTimer) { clearInterval(callIncomingPollTimer); callIncomingPollTimer = null; }
+  }
+
+  // Event listeners for call buttons
+  document.getElementById('wa-call-start-btn').addEventListener('click', () => {
+    if (waChatUser) startCall(waChatUser);
+  });
+  document.getElementById('wa-call-end-btn').addEventListener('click', endCall);
+  document.getElementById('wa-call-mute-btn').addEventListener('click', toggleCallMute);
+  document.getElementById('wa-incoming-accept').addEventListener('click', acceptIncomingCall);
+  document.getElementById('wa-incoming-reject').addEventListener('click', rejectIncomingCall);
 
   // Global unread polling (for badge)
   let waLastUnreadCount = 0;

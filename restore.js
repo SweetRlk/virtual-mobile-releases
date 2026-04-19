@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const BACKUP_DIR = path.join(__dirname, '.backup');
-const FILES = ['main.js', 'telemetry.js', 'overlay.html'];
+const FILES = ['main.js', 'telemetry.js', 'overlay.html', 'preload.js'];
 
 if (!fs.existsSync(BACKUP_DIR)) {
   console.log('Nenhum backup encontrado.');

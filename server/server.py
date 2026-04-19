@@ -6,6 +6,7 @@ import urllib.request
 import json as json_lib
 import random
 import time
+import datetime
 from flask import Flask, request, jsonify, render_template_string, send_from_directory
 from flask_cors import CORS
 
@@ -203,8 +204,25 @@ def init_db():
     conn.commit()
     conn.close()
 
-
-# ===== HELPERS =====
+    # Calls table (VoIP signaling)
+    conn2 = get_db()
+    conn2.execute('''
+        CREATE TABLE IF NOT EXISTS calls (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            caller_id INTEGER NOT NULL,
+            callee_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'ringing',
+            sdp_offer TEXT DEFAULT '',
+            sdp_answer TEXT DEFAULT '',
+            ice_caller TEXT DEFAULT '[]',
+            ice_callee TEXT DEFAULT '[]',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (caller_id) REFERENCES users(id),
+            FOREIGN KEY (callee_id) REFERENCES users(id)
+        )
+    ''')
+    conn2.commit()
+    conn2.close()
 
 def verify_token(token):
     """Verify session token and return user row or None. Enforces token expiration."""
@@ -218,7 +236,6 @@ def verify_token(token):
     ''', (token,)).fetchone()
     if row:
         # Check token expiration
-        import datetime
         created = datetime.datetime.strptime(row['session_created'], '%Y-%m-%d %H:%M:%S') if isinstance(row['session_created'], str) else row['session_created']
         age = (datetime.datetime.utcnow() - created).total_seconds()
         if age > SESSION_TTL:
@@ -271,42 +288,8 @@ def register():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON inválido'}), 400
-
-    username = (data.get('username') or '').strip()
-    pin = (data.get('pin') or '').strip()
-
-    if not username or not pin:
-        return jsonify({'error': 'Usuário e PIN são obrigatórios'}), 400
-
-    if len(pin) < 4 or len(pin) > 8:
-        return jsonify({'error': 'PIN deve ter entre 4 e 8 dígitos'}), 400
-
-    if not pin.isdigit():
-        return jsonify({'error': 'PIN deve conter apenas números'}), 400
-
-    if len(username) < 3 or len(username) > 20:
-        return jsonify({'error': 'Usuário deve ter entre 3 e 20 caracteres'}), 400
-
-    pin_hash = bcrypt.hashpw(pin.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    discord_id = (data.get('discord_id') or '').strip()
-    estado = (data.get('estado') or '').strip().upper()
-
-    phone = ''
-    if estado and estado in DDD_POR_ESTADO:
-        phone = gerar_telefone(estado)
-
-    conn = get_db()
-    try:
-        conn.execute(
-            'INSERT INTO users (username, pin_hash, discord_id, estado, phone) VALUES (?, ?, ?, ?, ?)',
-            (username, pin_hash, discord_id, estado, phone)
-        )
-        conn.commit()
-        return jsonify({'success': True, 'message': f'Usuário {username} criado'}), 201
-    except sqlite3.IntegrityError:
-        return jsonify({'error': 'Usuário já existe'}), 409
-    finally:
-        conn.close()
+    result, status = validate_and_create_user(data)
+    return jsonify(result), status
 
 
 @app.route('/api/login', methods=['POST'])
@@ -1564,15 +1547,190 @@ def discord_nota_image():
     return jsonify({'success': True})
 
 
-# ===== AUTO-UPDATE =====
-UPDATES_DIR = os.path.join(os.path.dirname(__file__), 'updates')
-os.makedirs(UPDATES_DIR, exist_ok=True)
+# ===== VOIP CALLS =====
 
-@app.route('/updates/<path:filename>', methods=['GET'])
-def serve_update(filename):
-    return send_from_directory(UPDATES_DIR, filename)
+@app.route('/api/call/start', methods=['POST'])
+def call_start():
+    user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
+    if not user:
+        return jsonify({'error': 'Não autorizado'}), 401
+    data = request.get_json()
+    if not data or not data.get('to'):
+        return jsonify({'error': 'Destinatário obrigatório'}), 400
+
+    to_username = data['to'].strip()
+    sdp_offer = data.get('sdp_offer', '')
+
+    conn = get_db()
+    callee = conn.execute('SELECT id, username FROM users WHERE username = ?', (to_username,)).fetchone()
+    if not callee:
+        conn.close()
+        return jsonify({'error': 'Usuário não encontrado'}), 404
+
+    # Cancel any existing ringing calls from this caller or to this callee
+    conn.execute("UPDATE calls SET status = 'ended' WHERE caller_id = ? AND status = 'ringing'", (user['id'],))
+    conn.execute("UPDATE calls SET status = 'ended' WHERE callee_id = ? AND status = 'ringing'", (callee['id'],))
+
+    conn.execute(
+        'INSERT INTO calls (caller_id, callee_id, status, sdp_offer) VALUES (?, ?, ?, ?)',
+        (user['id'], callee['id'], 'ringing', sdp_offer)
+    )
+    call_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'call_id': call_id})
+
+
+@app.route('/api/call/incoming', methods=['GET'])
+def call_incoming():
+    user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
+    if not user:
+        return jsonify({'error': 'Não autorizado'}), 401
+    conn = get_db()
+    row = conn.execute('''
+        SELECT c.id, c.sdp_offer, c.status, u.username as caller_name, u.avatar_url as caller_avatar
+        FROM calls c JOIN users u ON c.caller_id = u.id
+        WHERE c.callee_id = ? AND c.status = 'ringing'
+        ORDER BY c.created_at DESC LIMIT 1
+    ''', (user['id'],)).fetchone()
+    conn.close()
+    if row:
+        return jsonify({
+            'call': {
+                'id': row['id'],
+                'caller': row['caller_name'],
+                'avatar': row['caller_avatar'],
+                'sdp_offer': row['sdp_offer'],
+                'status': row['status']
+            }
+        })
+    return jsonify({'call': None})
+
+
+@app.route('/api/call/answer', methods=['POST'])
+def call_answer():
+    user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
+    if not user:
+        return jsonify({'error': 'Não autorizado'}), 401
+    data = request.get_json()
+    if not data or not data.get('call_id'):
+        return jsonify({'error': 'call_id obrigatório'}), 400
+
+    call_id = data['call_id']
+    accept = data.get('accept', False)
+    sdp_answer = data.get('sdp_answer', '')
+
+    conn = get_db()
+    call = conn.execute('SELECT * FROM calls WHERE id = ? AND callee_id = ?', (call_id, user['id'])).fetchone()
+    if not call:
+        conn.close()
+        return jsonify({'error': 'Chamada não encontrada'}), 404
+
+    if accept:
+        conn.execute('UPDATE calls SET status = ?, sdp_answer = ? WHERE id = ?', ('accepted', sdp_answer, call_id))
+    else:
+        conn.execute('UPDATE calls SET status = ? WHERE id = ?', ('rejected', call_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/call/ice', methods=['POST'])
+def call_ice():
+    user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
+    if not user:
+        return jsonify({'error': 'Não autorizado'}), 401
+    data = request.get_json()
+    if not data or not data.get('call_id') or not data.get('candidate'):
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    call_id = data['call_id']
+    conn = get_db()
+    call = conn.execute('SELECT * FROM calls WHERE id = ?', (call_id,)).fetchone()
+    if not call:
+        conn.close()
+        return jsonify({'error': 'Chamada não encontrada'}), 404
+
+    if call['caller_id'] == user['id']:
+        existing = json_lib.loads(call['ice_caller'] or '[]')
+        existing.append(data['candidate'])
+        conn.execute('UPDATE calls SET ice_caller = ? WHERE id = ?', (json_lib.dumps(existing), call_id))
+    elif call['callee_id'] == user['id']:
+        existing = json_lib.loads(call['ice_callee'] or '[]')
+        existing.append(data['candidate'])
+        conn.execute('UPDATE calls SET ice_callee = ? WHERE id = ?', (json_lib.dumps(existing), call_id))
+    else:
+        conn.close()
+        return jsonify({'error': 'Sem permissão'}), 403
+
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/call/status/<int:call_id>', methods=['GET'])
+def call_status(call_id):
+    user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
+    if not user:
+        return jsonify({'error': 'Não autorizado'}), 401
+
+    conn = get_db()
+    call = conn.execute('''
+        SELECT c.*, u1.username as caller_name, u2.username as callee_name
+        FROM calls c
+        JOIN users u1 ON c.caller_id = u1.id
+        JOIN users u2 ON c.callee_id = u2.id
+        WHERE c.id = ?
+    ''', (call_id,)).fetchone()
+    conn.close()
+    if not call:
+        return jsonify({'error': 'Chamada não encontrada'}), 404
+
+    if call['caller_id'] != user['id'] and call['callee_id'] != user['id']:
+        return jsonify({'error': 'Sem permissão'}), 403
+
+    # Return ICE candidates from the OTHER party
+    if call['caller_id'] == user['id']:
+        ice = json_lib.loads(call['ice_callee'] or '[]')
+    else:
+        ice = json_lib.loads(call['ice_caller'] or '[]')
+
+    return jsonify({
+        'status': call['status'],
+        'sdp_offer': call['sdp_offer'],
+        'sdp_answer': call['sdp_answer'],
+        'ice_candidates': ice,
+        'caller': call['caller_name'],
+        'callee': call['callee_name']
+    })
+
+
+@app.route('/api/call/end', methods=['POST'])
+def call_end():
+    user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
+    if not user:
+        return jsonify({'error': 'Não autorizado'}), 401
+    data = request.get_json()
+    if not data or not data.get('call_id'):
+        return jsonify({'error': 'call_id obrigatório'}), 400
+
+    call_id = data['call_id']
+    conn = get_db()
+    call = conn.execute('SELECT * FROM calls WHERE id = ?', (call_id,)).fetchone()
+    if not call:
+        conn.close()
+        return jsonify({'error': 'Chamada não encontrada'}), 404
+    if call['caller_id'] != user['id'] and call['callee_id'] != user['id']:
+        conn.close()
+        return jsonify({'error': 'Sem permissão'}), 403
+
+    conn.execute('UPDATE calls SET status = ? WHERE id = ?', ('ended', call_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
 
 
 if __name__ == '__main__':
     init_db()
+    print(f'🔑 Admin Key: {ADMIN_KEY}')
     app.run(host='0.0.0.0', port=3000)

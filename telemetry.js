@@ -11,10 +11,8 @@ const memcpy = msvcrt.func('void* __cdecl memcpy(_Out_ uint8_t*, _In_ void*, uin
 
 const FILE_MAP_READ = 0x4;
 const BUFFER_SIZE = 0x8000;
-const DEBUG_RAW_EVENTS = false;
 
 let handle = null, view = null;
-let prevEventFlags = { jobFinished: 0, tollgate: 0, ferry: 0, train: 0 };
 let eventHistory = {
   jobFinished: { value: 0, timestamp: null, lastTriggered: null },
   pedagio: { value: 0, timestamp: null, lastTriggered: null }
@@ -145,24 +143,12 @@ function getData() {
 
   const refuelAmount = buf.readFloatLE(0x5b8);
 
-  if (DEBUG_RAW_EVENTS) {
-    const flags = { jobFinished, jobDelivered, fined, tollgate, ferry, train, refuel, refuelPayed };
-    const raw = Array.from(buf.slice(0x10cc, 0x10d6));
-    if (onJob) console.log("[ON JOB] Flags:", flags);
-    prevEventFlags = flags;
-  }
-
   const jobDeliveredDistanceKm = Math.abs(buf.readFloatLE(0x5b4));
   const jobDeliveredEarnedXp = buf.readInt32LE(0x280);
 
-  const positionX = buf.readFloatLE(0xb0);
-  const positionY = buf.readFloatLE(0xb4);
-  const positionZ = buf.readFloatLE(0xb8);
-  const rotationY = buf.readFloatLE(0xbc);
-
   return {
     time, gameDate, speed, speedLimit, rpm, rpmMax, gear, cruiseControl,
-    fuel, fuelCapacity, fuelAvgConsumption: String(fuelAvgConsumption || '0'), fuelRange,
+    fuel, fuelCapacity, fuelAvgConsumption, fuelRange,
     routeDistance: Math.round(routeDistance / 1000), routeTime: routeTimeStr, plannedDistanceKm,
     truckBrand, truckName, cargo, cityDst, compDst, citySrc, compSrc,
     truckLicensePlate, truckLicensePlateCountry,
@@ -172,14 +158,8 @@ function getData() {
     fineAmount, tollgatePayAmount, ferryPayAmount, trainPayAmount,
     onJob, jobFinished, jobCancelled, jobDelivered, fined, tollgate, ferry, train,
     refuel, refuelPayed, refuelAmount,
-    jobDeliveredDistanceKm, jobDeliveredEarnedXp,
-    positionX, positionY, positionZ, rotationY
+    jobDeliveredDistanceKm, jobDeliveredEarnedXp
   };
-}
-
-function disconnect() {
-  if (view) { UnmapViewOfFile(view); view = null; }
-  if (handle) { CloseHandle(handle); handle = null; }
 }
 
 function detectEventTransitions(currentFlags) {
@@ -271,7 +251,7 @@ function startTelemetry(win) {
           lastEventTime = Date.now();
           if (win && !win.isDestroyed() && win.webContents) {
             try { win.webContents.send('event-transition', payload); }
-            catch (e) { console.error("Erro ao enviar: " + e.message); }
+            catch (e) { /* send failed */ }
           }
         });
       }
@@ -279,36 +259,7 @@ function startTelemetry(win) {
 
     const anyPedagio = !!(data.tollgate || data.ferry || data.train);
 
-    const telemetryPayload = {
-      time: data.time, gameDate: data.gameDate,
-      speed: data.speed, speedLimit: data.speedLimit,
-      rpm: data.rpm, rpmMax: data.rpmMax,
-      gear: data.gear, cruiseControl: data.cruiseControl,
-      fuel: data.fuel, fuelCapacity: data.fuelCapacity,
-      fuelAvgConsumption: data.fuelAvgConsumption, fuelRange: data.fuelRange,
-      routeDistance: data.routeDistance, routeTime: data.routeTime,
-      plannedDistanceKm: data.plannedDistanceKm,
-      truckBrand: data.truckBrand, truckName: data.truckName,
-      cargo: data.cargo, cityDst: data.cityDst, compDst: data.compDst,
-      citySrc: data.citySrc, compSrc: data.compSrc,
-      truckLicensePlate: data.truckLicensePlate, truckLicensePlateCountry: data.truckLicensePlateCountry,
-      odometer: data.odometer, cargoDamage: data.cargoDamage,
-      wearEngine: data.wearEngine, wearTransmission: data.wearTransmission,
-      wearCabin: data.wearCabin, wearChassis: data.wearChassis, wearWheels: data.wearWheels,
-      jobIncome: Number(data.jobIncome), jobCancelledPenalty: Number(data.jobCancelledPenalty),
-      jobDeliveredRevenue: Number(data.jobDeliveredRevenue),
-      fineAmount: data.fineAmount, tollgatePayAmount: data.tollgatePayAmount,
-      ferryPayAmount: data.ferryPayAmount, trainPayAmount: data.trainPayAmount,
-      onJob: data.onJob, jobFinished: data.jobFinished, jobCancelled: data.jobCancelled,
-      jobDelivered: data.jobDelivered, fined: data.fined,
-      tollgate: data.tollgate, ferry: data.ferry, train: data.train,
-      refuel: data.refuel, refuelPayed: data.refuelPayed, refuelAmount: data.refuelAmount,
-      anyPedagio,
-      jobDeliveredDistanceKm: data.jobDeliveredDistanceKm,
-      jobDeliveredEarnedXp: data.jobDeliveredEarnedXp
-    };
-
-    win.webContents.send('telemetry', telemetryPayload);
+    win.webContents.send('telemetry', { ...data, anyPedagio });
   }, 100);
 }
 
