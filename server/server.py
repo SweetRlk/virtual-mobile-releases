@@ -14,7 +14,9 @@ app = Flask(__name__)
 CORS(app, origins=['app://*'])
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'sweet.db')
-ADMIN_KEY = os.environ.get('ADMIN_KEY', secrets.token_hex(16))
+ADMIN_USER = os.environ.get('ADMIN_USER', 'Sweet')
+ADMIN_PASS = os.environ.get('ADMIN_PASS', 'Ph0201')
+ADMIN_SECRET = secrets.token_hex(32)  # Cookie signing secret (rotates on restart)
 
 # ===== RATE LIMITING (in-memory) =====
 SESSION_TTL = 86400  # Token expira em 24h
@@ -190,6 +192,8 @@ def init_db():
         conn.execute("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''")
     if 'estado' not in cols:
         conn.execute("ALTER TABLE users ADD COLUMN estado TEXT DEFAULT ''")
+    if 'plan' not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
     # User data store (notas, config, etc.)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS user_data (
@@ -230,7 +234,7 @@ def verify_token(token):
         return None
     conn = get_db()
     row = conn.execute('''
-        SELECT u.id, u.username, u.discord_id, u.avatar_url, u.phone, s.created_at as session_created
+        SELECT u.id, u.username, u.discord_id, u.avatar_url, u.phone, u.plan, s.created_at as session_created
         FROM sessions s JOIN users u ON s.user_id = u.id
         WHERE s.token = ?
     ''', (token,)).fetchone()
@@ -245,6 +249,19 @@ def verify_token(token):
             return None
     conn.close()
     return row
+
+
+def require_premium(user):
+    """Check if user has premium plan. Returns error response or None if OK."""
+    plan = 'free'
+    if user:
+        try:
+            plan = user['plan'] or 'free'
+        except (KeyError, IndexError):
+            plan = 'free'
+    if plan != 'premium':
+        return jsonify({'error': 'Recurso exclusivo da versão premium'}), 403
+    return None
 
 
 def validate_and_create_user(data):
@@ -262,6 +279,9 @@ def validate_and_create_user(data):
     pin_hash = bcrypt.hashpw(pin.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     discord_id = (data.get('discord_id') or '').strip()
     estado = (data.get('estado') or '').strip().upper()
+    plan = (data.get('plan') or 'free').strip().lower()
+    if plan not in ('free', 'premium'):
+        plan = 'free'
 
     phone = ''
     if estado and estado in DDD_POR_ESTADO:
@@ -270,8 +290,8 @@ def validate_and_create_user(data):
     conn = get_db()
     try:
         conn.execute(
-            'INSERT INTO users (username, pin_hash, discord_id, estado, phone) VALUES (?, ?, ?, ?, ?)',
-            (username, pin_hash, discord_id, estado, phone)
+            'INSERT INTO users (username, pin_hash, discord_id, estado, phone, plan) VALUES (?, ?, ?, ?, ?, ?)',
+            (username, pin_hash, discord_id, estado, phone, plan)
         )
         conn.commit()
         return {'success': True, 'message': f'Usu\u00e1rio {username} criado', 'phone': phone, 'estado': estado}, 201
@@ -357,6 +377,7 @@ def login():
             'discord_id': user['discord_id'],
             'avatar_url': user['avatar_url'] or '',
             'phone': user['phone'] or '',
+            'plan': user['plan'] if 'plan' in user.keys() else 'free',
         }
     })
 
@@ -453,6 +474,10 @@ ADMIN_HTML = '''<!DOCTYPE html>
 </head>
 <body>
   <h1>🎮 Sweet Admin</h1>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div></div>
+    <a href="/admin/logout" style="font-size:12px;color:#ff3b30;text-decoration:none;opacity:0.7;">Sair ↗</a>
+  </div>
 
   <div class="stats">
     <div class="stat"><div class="stat-num" id="st-users">-</div><div class="stat-label">Usuários</div></div>
@@ -481,22 +506,26 @@ ADMIN_HTML = '''<!DOCTYPE html>
       </select>
       <button class="btn btn-green" onclick="createUser()">＋ Criar</button>
     </div>
+    <div class="form-row">
+      <select id="f-plan" style="width:120px;">
+        <option value="free">Free</option>
+        <option value="premium">Premium</option>
+      </select>
+    </div>
   </div>
 
   <h2>Usuários</h2>
   <div class="card" style="padding:0;overflow:hidden;">
     <div class="table-wrap">
     <table>
-      <thead><tr><th>#</th><th>Usuário</th><th>Discord</th><th>Tel</th><th>UF</th><th>HWID</th><th>Criado</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>Usuário</th><th>Plano</th><th>Discord</th><th>Tel</th><th>UF</th><th>HWID</th><th>Criado</th><th>Status</th><th></th></tr></thead>
       <tbody id="user-list"></tbody>
     </table>
     </div>
   </div>
 
 <script>
-  const KEY = new URLSearchParams(location.search).get('key') || '';
-
-  function headers() { return { 'Content-Type': 'application/json', 'X-Admin-Key': KEY }; }
+  function headers() { return { 'Content-Type': 'application/json' }; }
 
   function showMsg(text, ok) {
     const m = document.getElementById('msg');
@@ -508,8 +537,8 @@ ADMIN_HTML = '''<!DOCTYPE html>
 
   async function load() {
     try {
-      const res = await fetch('/admin/api/users?key=' + KEY);
-      if (!res.ok) { document.body.innerHTML = '<h1 style="color:#ff3b30">Acesso negado</h1><p>Adicione ?key=SUA_CHAVE na URL</p>'; return; }
+      const res = await fetch('/admin/api/users');
+      if (!res.ok) { location.href = '/admin/login'; return; }
       const data = await res.json();
       document.getElementById('st-users').textContent = data.users.length;
       document.getElementById('st-sessions').textContent = data.active_sessions;
@@ -521,6 +550,7 @@ ADMIN_HTML = '''<!DOCTYPE html>
         tr.innerHTML =
           '<td style="opacity:0.3">' + u.id + '</td>' +
           '<td><strong>' + esc(u.username) + '</strong></td>' +
+          '<td><span class="badge ' + (u.plan === 'premium' ? 'badge-online' : '') + '" style="cursor:pointer;' + (u.plan !== 'premium' ? 'background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);' : '') + '" onclick="togglePlan(' + u.id + ',\\'' + esc(u.username) + '\\',\\'' + (u.plan || 'free') + '\\')">' + (u.plan === 'premium' ? '⭐ Premium' : 'Free') + '</span></td>' +
           '<td style="opacity:0.5;font-size:11px">' + (u.discord_id || '—') + '</td>' +
           '<td style="opacity:0.5;font-size:11px">' + (u.phone || '<span style="opacity:0.3">—</span>') + '</td>' +
           '<td style="opacity:0.5;font-size:11px">' + (u.estado || '—') + '</td>' +
@@ -545,11 +575,23 @@ ADMIN_HTML = '''<!DOCTYPE html>
     const pin = document.getElementById('f-pin').value.trim();
     const discord_id = document.getElementById('f-discord').value.trim();
     const estado = document.getElementById('f-estado').value;
+    const plan = document.getElementById('f-plan').value;
     if (!username || !pin) { showMsg('Preencha usuário e PIN', false); return; }
     try {
-      const res = await fetch('/admin/api/users', { method: 'POST', headers: headers(), body: JSON.stringify({ username, pin, discord_id, estado }) });
+      const res = await fetch('/admin/api/users', { method: 'POST', headers: headers(), body: JSON.stringify({ username, pin, discord_id, estado, plan }) });
       const data = await res.json();
-      if (res.ok) { showMsg('Usuário ' + username + ' criado!' + (data.phone ? ' Tel: ' + data.phone : ''), true); document.getElementById('f-user').value = ''; document.getElementById('f-pin').value = ''; document.getElementById('f-discord').value = ''; document.getElementById('f-estado').value = ''; load(); }
+      if (res.ok) { showMsg('Usuário ' + username + ' criado!' + (data.phone ? ' Tel: ' + data.phone : ''), true); document.getElementById('f-user').value = ''; document.getElementById('f-pin').value = ''; document.getElementById('f-discord').value = ''; document.getElementById('f-estado').value = ''; document.getElementById('f-plan').value = 'free'; load(); }
+      else showMsg(data.error, false);
+    } catch(e) { showMsg('Erro: ' + e.message, false); }
+  }
+
+  async function togglePlan(id, name, current) {
+    const newPlan = current === 'premium' ? 'free' : 'premium';
+    if (!confirm('Mudar plano de ' + name + ' para ' + newPlan.toUpperCase() + '?')) return;
+    try {
+      const res = await fetch('/admin/api/users/' + id + '/plan', { method: 'PUT', headers: headers(), body: JSON.stringify({ plan: newPlan }) });
+      const data = await res.json();
+      if (res.ok) { showMsg('Plano de ' + name + ' alterado para ' + newPlan, true); load(); }
       else showMsg(data.error, false);
     } catch(e) { showMsg('Erro: ' + e.message, false); }
   }
@@ -557,7 +599,7 @@ ADMIN_HTML = '''<!DOCTYPE html>
   async function deleteUser(id, name) {
     if (!confirm('Deletar ' + name + '? Isso remove todas as sessões.')) return;
     try {
-      const res = await fetch('/admin/api/users/' + id + '?key=' + KEY, { method: 'DELETE' });
+      const res = await fetch('/admin/api/users/' + id, { method: 'DELETE' });
       const data = await res.json();
       if (res.ok) { showMsg(name + ' removido', true); load(); }
       else showMsg(data.error, false);
@@ -578,7 +620,7 @@ ADMIN_HTML = '''<!DOCTYPE html>
   async function resetHwid(id, name) {
     if (!confirm('Resetar HWID de ' + name + '? Ele poderá logar de qualquer PC novamente (vincular novo dispositivo).')) return;
     try {
-      const res = await fetch('/admin/api/users/' + id + '/hwid?key=' + KEY, { method: 'DELETE' });
+      const res = await fetch('/admin/api/users/' + id + '/hwid', { method: 'DELETE' });
       const data = await res.json();
       if (res.ok) { showMsg('HWID de ' + name + ' resetado!', true); load(); }
       else showMsg(data.error, false);
@@ -588,7 +630,7 @@ ADMIN_HTML = '''<!DOCTYPE html>
   async function clearData(id, name) {
     if (!confirm('Limpar TODOS os dados salvos de ' + name + '? (notas, wallpaper, configs)\\nIsso não pode ser desfeito!')) return;
     try {
-      const res = await fetch('/admin/api/users/' + id + '/data?key=' + KEY, { method: 'DELETE' });
+      const res = await fetch('/admin/api/users/' + id + '/data', { method: 'DELETE' });
       const data = await res.json();
       if (res.ok) { showMsg('Dados de ' + name + ' limpos! (' + data.deleted + ' registros removidos)', true); }
       else showMsg(data.error, false);
@@ -601,27 +643,101 @@ ADMIN_HTML = '''<!DOCTYPE html>
 </html>'''
 
 
-def check_admin_key():
-    key = request.args.get('key') or request.headers.get('X-Admin-Key', '')
-    if key != ADMIN_KEY:
+# ===== ADMIN AUTH (session-based) =====
+_admin_sessions = {}  # { token: expiry_timestamp }
+
+def check_admin_session():
+    """Check if current request has a valid admin session cookie."""
+    token = request.cookies.get('admin_session')
+    if not token:
+        return False
+    expiry = _admin_sessions.get(token)
+    if not expiry or time.time() > expiry:
+        _admin_sessions.pop(token, None)
         return False
     return True
+
+ADMIN_LOGIN_HTML = '''<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweet Admin - Login</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e0e0e0; font-family: -apple-system, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .login-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px; width: 320px; text-align: center; }
+  h1 { font-size: 20px; color: #00ff88; margin-bottom: 6px; }
+  .sub { font-size: 12px; opacity: 0.4; margin-bottom: 24px; }
+  input { width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 12px 14px; color: white; font-size: 13px; font-family: inherit; outline: none; margin-bottom: 10px; }
+  input:focus { border-color: #00ff88; }
+  input::placeholder { color: rgba(255,255,255,0.3); }
+  button { width: 100%; background: linear-gradient(135deg, #00ff88, #00cc66); color: #000; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+  button:hover { opacity: 0.9; }
+  .err { color: #ff3b30; font-size: 12px; min-height: 18px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>\U0001f3ae Sweet Admin</h1>
+    <div class="sub">Painel de administra\u00e7\u00e3o</div>
+    <form method="POST" action="/admin/login">
+      <input name="username" placeholder="Usu\u00e1rio" autocomplete="username" required>
+      <input name="password" type="password" placeholder="Senha" autocomplete="current-password" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <div class="err">{{ error }}</div>
+  </div>
+</body>
+</html>'''
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'GET':
+        if check_admin_session():
+            from flask import redirect
+            return redirect('/admin')
+        return render_template_string(ADMIN_LOGIN_HTML, error='')
+    
+    username = (request.form.get('username') or '').strip()
+    password = (request.form.get('password') or '').strip()
+    
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        token = secrets.token_hex(32)
+        _admin_sessions[token] = time.time() + 86400  # 24h
+        from flask import redirect, make_response
+        resp = make_response(redirect('/admin'))
+        resp.set_cookie('admin_session', token, httponly=True, samesite='Lax', max_age=86400)
+        return resp
+    
+    return render_template_string(ADMIN_LOGIN_HTML, error='Usu\u00e1rio ou senha incorretos'), 401
+
+@app.route('/admin/logout')
+def admin_logout():
+    token = request.cookies.get('admin_session')
+    if token:
+        _admin_sessions.pop(token, None)
+    from flask import redirect, make_response
+    resp = make_response(redirect('/admin/login'))
+    resp.delete_cookie('admin_session')
+    return resp
 
 
 @app.route('/admin')
 def admin_panel():
-    if not check_admin_key():
-        return 'Acesso negado. Use ?key=SUA_CHAVE', 403
+    if not check_admin_session():
+        from flask import redirect
+        return redirect('/admin/login')
     return render_template_string(ADMIN_HTML)
 
 
 @app.route('/admin/api/users', methods=['GET'])
 def admin_list_users():
-    if not check_admin_key():
+    if not check_admin_session():
         return jsonify({'error': 'Acesso negado'}), 403
 
     conn = get_db()
-    users = conn.execute('SELECT id, username, discord_id, hwid, phone, estado, created_at FROM users ORDER BY id').fetchall()
+    users = conn.execute('SELECT id, username, discord_id, hwid, phone, estado, plan, created_at FROM users ORDER BY id').fetchall()
     sessions = conn.execute('SELECT user_id, COUNT(*) as cnt FROM sessions GROUP BY user_id').fetchall()
     total_sessions = conn.execute('SELECT COUNT(*) as cnt FROM sessions').fetchone()['cnt']
     conn.close()
@@ -637,7 +753,7 @@ def admin_list_users():
 
 @app.route('/admin/api/users', methods=['POST'])
 def admin_create_user():
-    if not check_admin_key():
+    if not check_admin_session():
         return jsonify({'error': 'Acesso negado'}), 403
 
     data = request.get_json()
@@ -649,7 +765,7 @@ def admin_create_user():
 
 @app.route('/admin/api/users/<int:user_id>', methods=['DELETE'])
 def admin_delete_user(user_id):
-    if not check_admin_key():
+    if not check_admin_session():
         return jsonify({'error': 'Acesso negado'}), 403
 
     conn = get_db()
@@ -662,7 +778,7 @@ def admin_delete_user(user_id):
 
 @app.route('/admin/api/users/<int:user_id>/pin', methods=['PUT'])
 def admin_reset_pin(user_id):
-    if not check_admin_key():
+    if not check_admin_session():
         return jsonify({'error': 'Acesso negado'}), 403
 
     data = request.get_json()
@@ -679,9 +795,26 @@ def admin_reset_pin(user_id):
     return jsonify({'success': True})
 
 
+@app.route('/admin/api/users/<int:user_id>/plan', methods=['PUT'])
+def admin_update_plan(user_id):
+    if not check_admin_session():
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    data = request.get_json()
+    plan = (data.get('plan') or '').strip().lower() if data else ''
+    if plan not in ('free', 'premium'):
+        return jsonify({'error': 'Plano deve ser free ou premium'}), 400
+
+    conn = get_db()
+    conn.execute('UPDATE users SET plan = ? WHERE id = ?', (plan, user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
 @app.route('/admin/api/users/<int:user_id>/hwid', methods=['DELETE'])
 def admin_reset_hwid(user_id):
-    if not check_admin_key():
+    if not check_admin_session():
         return jsonify({'error': 'Acesso negado'}), 403
 
     conn = get_db()
@@ -694,7 +827,7 @@ def admin_reset_hwid(user_id):
 
 @app.route('/admin/api/users/<int:user_id>/data', methods=['DELETE'])
 def admin_clear_user_data(user_id):
-    if not check_admin_key():
+    if not check_admin_session():
         return jsonify({'error': 'Acesso negado'}), 403
 
     conn = get_db()
@@ -715,6 +848,8 @@ def bank_balance():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     conn = get_db()
     row = conn.execute('SELECT balance FROM users WHERE id = ?', (user['id'],)).fetchone()
@@ -729,6 +864,8 @@ def bank_deposit():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     data = request.get_json()
     if not data:
@@ -759,6 +896,8 @@ def bank_pix():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     data = request.get_json()
     if not data:
@@ -815,6 +954,8 @@ def bank_transactions():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     conn = get_db()
     rows = conn.execute(
@@ -834,6 +975,8 @@ def chat_send():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     data = request.get_json()
     if not data:
@@ -882,6 +1025,8 @@ def chat_conversations():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     conn = get_db()
     rows = conn.execute('''
@@ -923,6 +1068,8 @@ def chat_messages(username):
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     conn = get_db()
     other = conn.execute('SELECT id, username FROM users WHERE username = ? COLLATE NOCASE', (username,)).fetchone()
@@ -964,6 +1111,8 @@ def chat_unread():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     conn = get_db()
     row = conn.execute(
@@ -981,6 +1130,8 @@ def chat_users():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     conn = get_db()
     rows = conn.execute('SELECT username FROM users WHERE id != ? ORDER BY username', (user['id'],)).fetchall()
@@ -1038,6 +1189,8 @@ def get_contacts():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     conn = get_db()
     rows = conn.execute('''
         SELECT u.username, u.avatar_url, u.phone FROM contacts c
@@ -1054,6 +1207,8 @@ def add_contact():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON inválido'}), 400
@@ -1083,6 +1238,8 @@ def remove_contact(username):
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     conn = get_db()
     target = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (username,)).fetchone()
     if not target:
@@ -1100,6 +1257,8 @@ def search_users():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     q = (request.args.get('q') or '').strip()
     q_digits = ''.join(c for c in q if c.isdigit())
     if len(q_digits) < 4 and len(q) < 4:
@@ -1124,6 +1283,8 @@ def get_groups():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     conn = get_db()
     rows = conn.execute('''
         SELECT g.id, g.name, g.avatar_url, g.owner_id,
@@ -1146,6 +1307,8 @@ def create_group():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON inválido'}), 400
@@ -1182,6 +1345,8 @@ def get_group_messages(group_id):
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     conn = get_db()
     # Check membership
     member = conn.execute('SELECT id FROM group_members WHERE group_id = ? AND user_id = ?', (group_id, user['id'])).fetchone()
@@ -1209,6 +1374,8 @@ def send_group_message(group_id):
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON inválido'}), 400
@@ -1237,6 +1404,8 @@ def get_group_members(group_id):
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     conn = get_db()
     member = conn.execute('SELECT id FROM group_members WHERE group_id = ? AND user_id = ?', (group_id, user['id'])).fetchone()
     if not member:
@@ -1261,6 +1430,8 @@ def add_group_member(group_id):
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON inválido'}), 400
@@ -1406,6 +1577,8 @@ def discord_pedagio():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     city_src = data.get('citySrc', 'Desconhecida')
     city_dst = data.get('cityDst', 'Desconhecida')
@@ -1455,6 +1628,8 @@ def discord_nota():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     nota_text = data.get('nota', '')
     if not nota_text:
@@ -1523,6 +1698,8 @@ def discord_nota_image():
     user = verify_token(token)
     if not user:
         return jsonify({'error': 'Não autenticado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     image_b64 = data.get('image', '')
     numero = data.get('numero', 0)
@@ -1554,6 +1731,8 @@ def call_start():
     user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
     if not user:
         return jsonify({'error': 'Não autorizado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data or not data.get('to'):
         return jsonify({'error': 'Destinatário obrigatório'}), 400
@@ -1586,6 +1765,8 @@ def call_incoming():
     user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
     if not user:
         return jsonify({'error': 'Não autorizado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     conn = get_db()
     row = conn.execute('''
         SELECT c.id, c.sdp_offer, c.status, u.username as caller_name, u.avatar_url as caller_avatar
@@ -1612,6 +1793,8 @@ def call_answer():
     user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
     if not user:
         return jsonify({'error': 'Não autorizado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data or not data.get('call_id'):
         return jsonify({'error': 'call_id obrigatório'}), 400
@@ -1640,6 +1823,8 @@ def call_ice():
     user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
     if not user:
         return jsonify({'error': 'Não autorizado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data or not data.get('call_id') or not data.get('candidate'):
         return jsonify({'error': 'Dados inválidos'}), 400
@@ -1673,6 +1858,8 @@ def call_status(call_id):
     user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
     if not user:
         return jsonify({'error': 'Não autorizado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
 
     conn = get_db()
     call = conn.execute('''
@@ -1710,6 +1897,8 @@ def call_end():
     user = verify_token(request.headers.get('Authorization', '').replace('Bearer ', ''))
     if not user:
         return jsonify({'error': 'Não autorizado'}), 401
+    blocked = require_premium(user)
+    if blocked: return blocked
     data = request.get_json()
     if not data or not data.get('call_id'):
         return jsonify({'error': 'call_id obrigatório'}), 400
@@ -1732,5 +1921,6 @@ def call_end():
 
 if __name__ == '__main__':
     init_db()
-    print(f'🔑 Admin Key: {ADMIN_KEY}')
+    print(f'   Admin login: http://localhost:3000/admin')
+    print(f'   Usuário: {ADMIN_USER} | Senha: {ADMIN_PASS}')
     app.run(host='0.0.0.0', port=3000)

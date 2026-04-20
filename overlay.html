@@ -24,6 +24,7 @@
 
   /* ===== PHONE FRAME ===== */
   #phone {
+    --phone-scale: 1;
     position: absolute;
     top: 20px;
     right: 20px;
@@ -39,6 +40,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transform: scale(var(--phone-scale));
+    transform-origin: top right;
     transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
   }
   
@@ -851,12 +854,12 @@
   #toggle-btn.hidden-by-focus { display: none !important; }
 
   @keyframes phoneOut {
-    from { opacity: 1; transform: scale(1) translateY(0); }
-    to { opacity: 0; transform: scale(0.85) translateY(20px); }
+    from { opacity: 1; transform: scale(var(--phone-scale)) translateY(0); }
+    to { opacity: 0; transform: scale(calc(var(--phone-scale) * 0.85)) translateY(20px); }
   }
   @keyframes phoneIn {
-    from { opacity: 0; transform: scale(0.85) translateY(20px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+    from { opacity: 0; transform: scale(calc(var(--phone-scale) * 0.85)) translateY(20px); }
+    to { opacity: 1; transform: scale(var(--phone-scale)) translateY(0); }
   }
 
   /* ===== LOGIN SCREEN ===== */
@@ -1061,8 +1064,9 @@
         <div class="widget-time" id="home-time">--:--</div>
         <div class="widget-date" id="home-date"></div>
       </div>
+      <div id="free-banner" style="display:none;margin:0 20px 8px;padding:6px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;text-align:center;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.3px;">Versão Gratuita — Alguns apps são exclusivos da versão completa</div>
       <div class="app-grid">
-        <div class="app-icon" data-app="messages">
+        <div class="app-icon" data-app="messages" data-premium="true">
           <div class="icon-circle ic-messages"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg><div class="badge" id="msg-badge">0</div></div>
           <div class="app-label">WhatsApp</div>
         </div>
@@ -1078,15 +1082,15 @@
           <div class="icon-circle ic-dash"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44z"/><path d="M10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg></div>
           <div class="app-label">Painel</div>
         </div>
-        <div class="app-icon" data-app="notas">
+        <div class="app-icon" data-app="notas" data-premium="true">
           <div class="icon-circle ic-notas"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>
           <div class="app-label">Notas</div>
         </div>
-        <div class="app-icon" data-app="banco">
+        <div class="app-icon" data-app="banco" data-premium="true">
           <div class="icon-circle ic-banco"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-3.5-9L2 6v2h19V6l-10.5-5z"/></svg></div>
           <div class="app-label">Nubank</div>
         </div>
-        <div class="app-icon" data-app="yt">
+        <div class="app-icon" data-app="yt" data-premium="true">
           <div class="icon-circle ic-yt"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15.5v-7l6 3.5-6 3.5z"/></svg></div>
           <div class="app-label">YouTube</div>
         </div>
@@ -1567,6 +1571,21 @@
         </div>
 
         <div class="card" style="margin-top:12px;">
+          <div class="card-title">Tamanho do Celular</div>
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:11px;opacity:0.5;">Escala</span>
+              <span id="phone-scale-val" style="font-size:11px;font-weight:600;">100%</span>
+            </div>
+            <input type="range" id="phone-scale-slider" min="50" max="150" value="100" step="5" style="width:100%;accent-color:#4285f4;">
+            <div style="display:flex;justify-content:space-between;font-size:9px;opacity:0.3;margin-top:2px;">
+              <span>50%</span><span>100%</span><span>150%</span>
+            </div>
+          </div>
+          <button id="phone-size-reset" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:white;font-size:12px;font-weight:600;cursor:pointer;">Resetar Tamanho Padrão</button>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
           <div class="card-title">Sobre</div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
             <span style="font-size:11px;opacity:0.5;">Versão do sistema</span>
@@ -1586,6 +1605,9 @@
   // ===== ELECTRON API (via preload contextBridge) =====
   const eAPI = window.electronAPI;
 
+  // ===== VERSÃO: mude para true no build gratuito =====
+  let IS_FREE = false;
+
   // ===== LOCAL STORE (apenas token/sessão — dados ficam no servidor) =====
   const localStore = {
     get(key) { return localStorage.getItem(key); },
@@ -1603,6 +1625,7 @@
     try {
       API_URL = await eAPI.getApiUrl();
       APP_VERSION = await eAPI.getAppVersion();
+      document.getElementById('config-app-version').textContent = APP_VERSION;
     } catch(e) { /* config load failed */ }
   })();
 
@@ -1670,11 +1693,16 @@
           discord_id: data.user.discord_id || '',
           avatar_url: data.user.avatar_url || '',
           phone: data.user.phone || '',
+          plan: data.user.plan || 'free',
           token: data.token
         };
         discordUserId = data.user.discord_id || '';
         localStore.set('sweet_user', JSON.stringify(data.user));
         loginScreen.classList.add('hidden');
+
+        // Aplicar plano do servidor
+        IS_FREE = (loggedInUser.plan !== 'premium');
+        applyFreeMode();
 
         // Carregar dados do usuário após login
         resetAndLoadNotas();
@@ -1762,6 +1790,7 @@
 
     // Enviar notificação para Discord no pedágio (START e END)
     if (data.event === 'pedagio') {
+      if (IS_FREE) return; // Bloquear pedágio na versão free
       const t = data.telemetry || currentTelemetryData;
 
       const tollAmount = t.tollgatePayAmount || t.ferryPayAmount || t.trainPayAmount || 0;
@@ -1877,6 +1906,17 @@
   document.querySelectorAll('.app-icon').forEach(icon => {
     icon.addEventListener('click', () => navigateTo(icon.dataset.app));
   });
+
+  // ===== FREE VERSION: esconder apps premium =====
+  function applyFreeMode() {
+    if (IS_FREE) {
+      document.querySelectorAll('.app-icon[data-premium="true"]').forEach(el => el.remove());
+      document.getElementById('free-banner').style.display = 'block';
+    } else {
+      document.getElementById('free-banner').style.display = 'none';
+    }
+  }
+  applyFreeMode();
   document.querySelectorAll('[data-back]').forEach(btn => {
     btn.addEventListener('click', () => navigateTo('home'));
   });
@@ -2651,6 +2691,8 @@
   }
 
   function finalizarFrete(data) {
+    // Bloquear na versão free
+    if (IS_FREE) return;
     // Bloquear se não estiver logado
     if (!loggedInUser) return;
 
@@ -3113,6 +3155,35 @@
     if (url) {
       setWallpaper(url, wallpaperSizeSelect.value);
     }
+  });
+
+  // ===== TAMANHO DO CELULAR =====
+  const phoneEl = document.getElementById('phone');
+  const phoneScaleSlider = document.getElementById('phone-scale-slider');
+  const phoneScaleVal = document.getElementById('phone-scale-val');
+  const phoneSizeResetBtn = document.getElementById('phone-size-reset');
+
+  function applyPhoneScale(pct) {
+    phoneEl.style.setProperty('--phone-scale', pct / 100);
+    phoneScaleSlider.value = pct;
+    phoneScaleVal.textContent = pct + '%';
+  }
+
+  // Carregar escala do cache local imediatamente
+  applyPhoneScale(parseInt(localStore.get('phone_scale')) || 100);
+
+  phoneScaleSlider.addEventListener('input', () => {
+    const pct = parseInt(phoneScaleSlider.value);
+    applyPhoneScale(pct);
+  });
+  phoneScaleSlider.addEventListener('change', () => {
+    localStore.set('phone_scale', phoneScaleSlider.value);
+  });
+
+  phoneSizeResetBtn.addEventListener('click', () => {
+    applyPhoneScale(100);
+    localStore.set('phone_scale', '100');
+    showNotification('📱', 'Tamanho resetado!');
   });
 
   // ===== WHATSAPP CHAT =====
