@@ -23,3 +23,5 @@ data/
 # === OUTROS ===
 *.log
 *.db
+.env
+server/.env
