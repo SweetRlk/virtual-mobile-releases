@@ -1,0 +1,25 @@
+# === DEPENDÊNCIAS ===
+node_modules/
+.backup/
+
+# === BUILD OUTPUT (vai como release asset, não via git) ===
+dist/
+
+# === CÓDIGO FONTE (nunca vai pro repo público) ===
+overlay.html
+main.js
+preload.js
+telemetry.js
+restore.js
+deploy.js
+obfuscate.js
+installer.nsh
+build.bat
+deploy.bat
+config.json
+server/
+data/
+
+# === OUTROS ===
+*.log
+*.db

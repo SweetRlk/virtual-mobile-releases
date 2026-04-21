@@ -1,0 +1,77 @@
+{
+  "name": "virtual-mobile",
+  "version": "1.0.9",
+  "main": "main.js",
+  "description": "Celular para ETS2",
+  "author": "SWE",
+  "scripts": {
+    "start": "electron .",
+    "obfuscate": "node obfuscate.js",
+    "restore": "node restore.js",
+    "build": "node obfuscate.js && electron-builder && node restore.js",
+    "deploy": "node deploy.js"
+  },
+  "build": {
+    "appId": "com.sweeet.phoneproject",
+    "productName": "Virtual Mobile",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico",
+      "signAndEditExecutable": true,
+      "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "Virtual Mobile",
+      "perMachine": false,
+      "include": "installer.nsh",
+      "artifactName": "Virtual-Mobile-Setup-${version}.${ext}"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "SweetRlk",
+      "repo": "virtual-mobile-releases"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "overlay.html",
+      "telemetry.js",
+      "config.json",
+      "package.json",
+      "icon.ico",
+      "!data/**",
+      "!obfuscate.js",
+      "!restore.js",
+      "!.backup/**"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/koffi/**"
+    ],
+    "extraResources": [
+      {
+        "from": "data",
+        "to": "data"
+      },
+      {
+        "from": "scs-telemetry.dll",
+        "to": "scs-telemetry.dll"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3",
+    "koffi": "^2.15.6"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^26.8.1",
+    "javascript-obfuscator": "^5.4.1"
+  }
+}
