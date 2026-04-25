@@ -1,6 +1,6 @@
 {
   "name": "virtual-mobile",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "main": "main.js",
   "description": "Celular para ETS2",
   "author": "SWE",
@@ -45,6 +45,7 @@
       "config.json",
       "package.json",
       "icon.ico",
+      "node_modules/**",
       "!data/**",
       "!obfuscate.js",
       "!restore.js",

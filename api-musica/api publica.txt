@@ -1,0 +1,26 @@
+pesquisa: https://search.mtamusicas.com/api/v1/search-youtube?q=orochi
+
+resultados: 
+
+0	
+id	"X7D0ckM2p2A"
+title	'Orochi "ANTES DO SOL NASCER" feat. PL Quest e Shok (prod. Kizzy)'
+author	"Orochi"
+authorId	"UCQSDP7H4BINtrZ0bJc_FNIA"
+duration	"3:50"
+
+1	
+id	"SP1qu6_zw3s"
+title	"Orochi - Van Cleef ft. Filipe Ret (Prod. Portugal no Beat)"
+author	"Orochi"
+authorId	"UCQSDP7H4BINtrZ0bJc_FNIA"
+duration	"2:57"
+
+etc..
+
+player: hhttps://play.mtamusicas.com/nome_da_busca/videoId
+exemplo: https://play.mtamusicas.com/Orochi - Van Cleef ft. Filipe Ret (Prod. Portugal no Beat)/SP1qu6_zw3s
+
+
+
+
