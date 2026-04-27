@@ -1,8 +1,8 @@
 {
   "name": "virtual-mobile",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "main": "main.js",
-  "description": "Celular para ETS2",
+  "description": "Celular virtual para ETS2 e ATS",
   "author": "SWE",
   "scripts": {
     "start": "electron .",
