@@ -244,6 +244,36 @@ def require_premium(user): ... # retorna 403 se plan != 'premium'
 
 ---
 
+## 16. main.js — Anti-duplicata no Alt+Tab (transparent + frameless)
+
+**Linhas antes do `app.whenReady()` e logo após `new BrowserWindow(...)`**
+
+```js
+// ANTES do app.whenReady():
+app.setAppUserModelId('com.sweeet.phoneproject');
+
+// Logo após new BrowserWindow():
+win.setAppDetails({ appId: 'com.sweeet.phoneproject' });
+```
+
+**Por que existe:** Janelas `transparent: true` + `frame: false` + `alwaysOnTop: true` no Electron/Windows fazem o DWM criar um handle de composição separado internamente. Sem o `AppUserModelID` fixado **antes** do ready e vinculado **diretamente à janela** via `setAppDetails`, o Windows registra os dois handles como janelas independentes — resultando em 2 entradas no Alt+Tab.
+
+**Regras críticas:**
+- `app.setAppUserModelId()` deve ficar **fora** do `whenReady()`, no topo do arquivo, antes de qualquer `app.commandLine`
+- `win.setAppDetails({ appId: ... })` deve ser chamado **imediatamente** após o `new BrowserWindow()`, antes de qualquer outro método no `win`
+- O `appId` deve ser **idêntico** nos dois lugares E igual ao `build.appId` do `package.json` (`com.sweeet.phoneproject`)
+- `app.requestSingleInstanceLock()` deve estar logo após o `setAppUserModelId` — evita clonagem em cascata ao clicar em entradas fantasmas
+- `app.on('browser-window-created')` deve setar `skipTaskbar(true)` em QUALQUER janela que não seja `win` — esta é a solução definitiva; sem ela, janelas internas do autoUpdater, DWM phantoms e captureWin aparecem no Alt+Tab
+- `win.webContents.setWindowOpenHandler` deve retornar `{ action: 'deny' }` e redirecionar para `shell.openExternal` — sem isso `window.open()` cria BrowserWindows extras
+- `skipTaskbar` da janela principal pode operar em 2 modos:
+  - modo padrão: `false` (janela visível no Alt+Tab)
+  - modo blindado anti-duplicata: `true` (janela fora do Alt+Tab), **desde que** exista saída explícita para o usuário (`Tray` com opção **Sair** e atalho de emergência `Ctrl+Shift+Q` com fallback)
+- se tray + atalho global de saída falharem no runtime, o app deve fazer fallback automático para visível no Alt+Tab (segurança para não prender o cliente)
+
+**Não remova** nenhum desses calls. O bug de janelas duplas já foi reproduzido múltiplas vezes.
+
+---
+
 ## Regra geral para IAs
 
 Ao pedir modificações, sempre especifique:
