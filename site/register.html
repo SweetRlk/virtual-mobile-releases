@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Criar Conta — Sweet Applications</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">SA</div>
+      <div>
+        <h1>Sweet Applications</h1>
+        <span>Soluções para ETS2 &amp; ATS</span>
+      </div>
+    </div>
+    <nav>
+      <a href="/">Início</a>
+      <a href="/register" class="active">Criar Conta</a>
+      <a href="/login">Entrar</a>
+    </nav>
+  </header>
+
+  <div style="max-width:440px;margin:0 auto;">
+    <h1>Criar Conta</h1>
+    <p class="sub">Registre-se para acessar os serviços Sweet Applications.</p>
+
+    <div class="card">
+      <form id="register-form" autocomplete="off">
+        <div class="field">
+          <label for="username">Usuário *</label>
+          <input id="username" type="text" minlength="3" maxlength="20" placeholder="3 a 20 caracteres" required>
+        </div>
+
+        <div class="field">
+          <label for="pin">PIN de acesso *</label>
+          <input id="pin" type="password" inputmode="numeric" minlength="4" maxlength="8" placeholder="4 a 8 dígitos numéricos" required>
+          <div class="field-hint">Usado para entrar no app. Somente números.</div>
+        </div>
+
+        <div class="field">
+          <label for="pin-confirm">Confirmar PIN *</label>
+          <input id="pin-confirm" type="password" inputmode="numeric" minlength="4" maxlength="8" placeholder="Repita o PIN" required>
+        </div>
+
+        <div class="field">
+          <label for="discord">Discord ID (obrigatório)</label>
+          <input id="discord" type="text" placeholder="Ex: 123456789012345678" maxlength="80">
+          <div class="field-hint">ID numérico do seu Discord. Ative o "Modo Desenvolvedor" nas configurações do Discord e clique com botão direito no seu nome para copiar o ID.</div>
+        </div>
+
+        <div class="field">
+          <label for="estado">UF (opcional)</label>
+          <select id="estado">
+            <option value="">— Selecione —</option>
+          </select>
+          <div class="field-hint">Seu estado para gerar número de telefone automaticamente.</div>
+        </div>
+
+        <div id="msg" class="msg"></div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;">Criar Conta</button>
+      </form>
+    </div>
+  </div>
+</div>
+<footer class="wrap">Sweet Applications &mdash; Soluções para ETS2 e American Truck Simulator</footer>
+<script src="/js/register.js"></script>
+</body>
+</html>
