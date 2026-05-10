@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
       showMsg('Os PINs não conferem.', 'error');
       return;
     }
-    if (pin.length < 4 || pin.length > 8 || !/^\d+$/.test(pin)) {
-      showMsg('O PIN deve ter 4 a 8 dígitos numéricos.', 'error');
+    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+      showMsg('O PIN deve ter exatamente 4 dígitos numéricos.', 'error');
       return;
     }
     if (username.length < 3 || username.length > 20) {
