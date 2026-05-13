@@ -1,6 +1,6 @@
 {
   "name": "virtual-mobile",
-  "version": "1.0.63",
+  "version": "1.0.64",
   "main": "main.js",
   "description": "Celular virtual para ETS2 e ATS",
   "author": "SWE",
@@ -42,6 +42,7 @@
       "preload.js",
       "overlay.html",
       "telemetry.js",
+      "discord-rpc.js",
       "config.json",
       "package.json",
       "icon.ico",
@@ -67,6 +68,7 @@
     ]
   },
   "dependencies": {
+    "discord-rpc": "^4.0.1",
     "electron-updater": "^6.8.3",
     "koffi": "^2.15.6"
   },
