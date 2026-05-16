@@ -81,6 +81,25 @@ function handleLogout() {
   window.location.href = '/login';
 }
 
+async function resetHwid() {
+  if (!confirm('Tem certeza que deseja resetar seu HWID?\n\nVocê só pode fazer isso 1 vez a cada 30 dias.')) return;
+  const btn = document.getElementById('reset-hwid-btn');
+  const msg = document.getElementById('reset-hwid-msg');
+  btn.disabled = true;
+  btn.textContent = 'Resetando...';
+  msg.textContent = '';
+  const { ok, data } = await api('/api/reset-hwid', { method: 'POST' });
+  btn.disabled = false;
+  btn.textContent = 'Resetar HWID';
+  if (ok) {
+    msg.innerHTML = '<span style="color:#10b981;">✓ HWID resetado com sucesso!</span>';
+  } else {
+    msg.textContent = data.error || 'Erro ao resetar. Tente mais tarde.';
+    msg.style.color = '#f87171';
+  }
+  setTimeout(() => { msg.textContent = ''; msg.style.color = ''; }, 5000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
   if (loginForm) loginForm.addEventListener('submit', handleLogin);
@@ -89,7 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
 
   const profilePage = document.getElementById('profile-page');
-  if (profilePage) loadProfile();
+  if (profilePage) {
+    loadProfile();
+    const resetBtn = document.getElementById('reset-hwid-btn');
+    if (resetBtn) resetBtn.addEventListener('click', resetHwid);
+  }
 });
 
 function showMsg(id, text, type) {

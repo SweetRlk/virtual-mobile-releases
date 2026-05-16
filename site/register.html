@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>body{background:#080b14}</style>
 <title>Criar Conta — Sweet Applications</title>
-<link rel="stylesheet" href="/css/style.css">
+<link rel="preload" href="/css/style.css" as="style" fetchpriority="high" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/css/style.css"></noscript>
 </head>
 <body>
 <div class="wrap">
@@ -29,6 +31,7 @@
 
     <div class="card">
       <form id="register-form" autocomplete="off">
+        <div style="position:absolute;left:-9999px;"><input type="text" name="website" id="website" tabindex="-1" autocomplete="off"></div>
         <div class="field">
           <label for="username">Usuário *</label>
           <input id="username" type="text" minlength="3" maxlength="20" placeholder="3 a 20 caracteres" required>

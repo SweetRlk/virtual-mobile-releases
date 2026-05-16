@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showMsg('Informe seu Discord ID.', 'error');
       return;
     }
+    if (/\d/.test(username)) { showMsg('O usuário não pode conter números.', 'error'); return; }
     if (!/^\d{17,20}$/.test(discord_id)) {
       showMsg('Discord ID inválido. Deve conter apenas números (17-20 dígitos).', 'error');
       return;
@@ -49,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     if (username.length < 3 || username.length > 20) {
-      showMsg('O usuário deve ter entre 3 e 20 caracteres.', 'error');
+      showMsg('O usuário não pode conter números e deve ter entre 3 e 20 caracteres.', 'error');
       return;
     }
 

@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>body{background:#080b14}</style>
 <title>Meu Perfil — Sweet Applications</title>
-<link rel="stylesheet" href="/css/style.css">
+<link rel="preload" href="/css/style.css" as="style" fetchpriority="high" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/css/style.css"></noscript>
 <style>
   .profile-header{display:flex;align-items:center;gap:20px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px}
   .profile-avatar{width:72px;height:72px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent)}
@@ -72,6 +74,15 @@
       </div>
       <a href="/empresa" class="btn btn-primary" style="font-size:12px;padding:8px 16px;">Acessar Painel</a>
     </div>
+  </div>
+
+  <div class="profile-field" style="margin-top:16px;">
+    <div class="profile-field-label">Resetar HWID</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <button id="reset-hwid-btn" class="btn btn-ghost" style="color:#f59e0b;border-color:rgba(245,158,11,0.3);font-size:12px;">Resetar HWID</button>
+      <span id="reset-hwid-msg" style="font-size:11px;color:var(--muted);"></span>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px;">Você pode resetar seu HWID 1 vez a cada 30 dias.</div>
   </div>
 
   <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;">
