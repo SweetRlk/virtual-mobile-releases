@@ -19,20 +19,22 @@
         <span>As melhores aplicações para ETS2 & ATS</span>
       </div>
     </div>
-    <nav>
+    <nav id="site-nav">
       <a href="/" class="active">Início</a>
-      <a href="/register">Criar Conta</a>
-      <a href="/login">Entrar</a>
+      <a href="/ranking">Ranking</a>
+      <a href="/register" class="nav-guest">Criar Conta</a>
+      <a href="/login" class="nav-guest">Entrar</a>
+      <a href="/profile" class="nav-user" style="display:none;">Perfil</a>
     </nav>
   </header>
 
   <section class="hero">
     <div style="max-width:700px;margin:0 auto;"><img fetchpriority="high" src="https://i.ibb.co/qFsKssRS/d4cb725d-66ba-4db1-8c82-c5bd945e449a.png" alt="Virtual Mobile Banner" style="width:100%;border-radius:16px;margin-bottom:20px;box-shadow:0 8px 32px rgba(0,0,0,0.4);"></div>
-    <span class="badge">v1.0.67</span>
+    <span class="badge">v1.0.68</span>
     <h1>Seu celular <span class="gradient">dentro do jogo</span></h1>
     <p class="sub">O Virtual Mobile traz uma experiência completa de smartphone para Euro Truck Simulator 2 e American Truck Simulator. Navegue, gerencie sua empresa e muito mais sem sair do volante.</p>
     <div class="hero-actions">
-      <a href="https://github.com/SweetRlk/virtual-mobile-releases/releases" class="btn btn-primary" target="_blank" rel="noopener">
+      <a href="https://github.com/SweetRlk/virtual-mobile-releases/releases/download/v1.0.68/Virtual-Mobile-Setup-1.0.68.exe" class="btn btn-primary" target="_blank" rel="noopener">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Baixar Grátis
       </a>
@@ -216,6 +218,6 @@
 <footer class="wrap">Desenvolvido por SweetRlk &mdash; <a href="https://wa.me/5517936363025" style="color:var(--muted);text-decoration:none">Suporte</a></footer>
 <script>document.addEventListener("DOMContentLoaded",()=>{const o=new IntersectionObserver(e=>e.forEach(({isIntersecting:t,target:n})=>{t&&(n.classList.add("active"),o.unobserve(n))}),{threshold:.15});document.querySelectorAll(".reveal").forEach(e=>o.observe(e));
 fetch("/api/stats").then(r=>r.json()).then(d=>{const e=document.querySelector(".stat-number");if(e){const t=+d.total||0;e.dataset.target=t;const n=()=>{const i=+e.textContent.replace(/\D/g,"")||0,d=Math.ceil((t-i)/20);d>0?(e.textContent=i+d,requestAnimationFrame(n)):e.textContent=t};requestAnimationFrame(n)}});
-const t=localStorage.getItem('token');const u=JSON.parse(localStorage.getItem('user')||'{}');if(t&&u&&u.username){const n=document.querySelector('header nav');if(n){n.innerHTML=`<a href="/">Início</a><a href="/profile">${u.username}</a><a href="#" onclick="localStorage.removeItem('token');localStorage.removeItem('user');location.href='/login'" style="color:var(--muted)">Sair</a>`}}})</script>
+const t=localStorage.getItem('token');const u=JSON.parse(localStorage.getItem('user')||'{}');if(t&&u&&u.username){const n=document.querySelector('header nav');if(n){n.innerHTML=`<a href="/">Início</a><a href="/ranking">Ranking</a><a href="/profile">${u.username}</a><a href="#" onclick="localStorage.removeItem('token');localStorage.removeItem('user');location.href='/login'" style="color:var(--muted)">Sair</a>`}}})</script>
 </body>
 </html>

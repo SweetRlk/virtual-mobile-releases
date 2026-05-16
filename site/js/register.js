@@ -1,21 +1,27 @@
 const API_URL = '';
+let _turnstileWidgetId = null;
 
-const ESTADOS = [
-  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
-  'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'
-];
-
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('register-form');
   const msg = document.getElementById('msg');
   const estadoSelect = document.getElementById('estado');
 
-  ESTADOS.forEach(uf => {
-    const opt = document.createElement('option');
-    opt.value = uf;
-    opt.textContent = uf;
-    estadoSelect.appendChild(opt);
-  });
+  // Carrega config e init Turnstile se habilitado
+  fetch(API_URL + '/api/public-config').then(r => r.json()).then(cfg => {
+    if (cfg.captcha_enabled && cfg.turnstile_site_key) {
+      window._onTurnstileReady = () => {
+        _turnstileWidgetId = turnstile.render('#captcha-container', {
+          sitekey: cfg.turnstile_site_key,
+          theme: 'dark'
+        });
+      };
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=_onTurnstileReady';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }).catch(() => {});
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -54,6 +60,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Captcha token (se não carregou, deixa passar — CSP do Cloudflare pode bloquear)
+    let captcha_token = '';
+    if (_turnstileWidgetId !== null) {
+      try {
+        if (typeof turnstile !== 'undefined') {
+          captcha_token = turnstile.getResponse(_turnstileWidgetId) || '';
+        }
+      } catch(_) {}
+    }
+
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.textContent = 'Registrando...';
@@ -62,14 +78,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = await fetch(API_URL + '/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, pin, discord_id, estado })
+        body: JSON.stringify({ username, pin, discord_id, estado, captcha_token })
       });
       const d = await r.json();
       if (r.ok) {
         showMsg('Conta criada com sucesso! <a href="/login" style="color:#3b82f6;text-decoration:underline;">Clique aqui para entrar</a>', 'success');
         form.reset();
+        if (_turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId);
       } else {
         showMsg(d.error || 'Erro ao criar conta.', 'error');
+        if (_turnstileWidgetId !== null) turnstile.reset(_turnstileWidgetId);
       }
     } catch (err) {
       showMsg('Erro de conexão com o servidor.', 'error');

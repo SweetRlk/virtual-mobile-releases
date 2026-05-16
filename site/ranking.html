@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>body{background:#080b14}</style>
+<title>Ranking — Sweet Applications</title>
+<link rel="preload" href="/css/style.css" as="style" fetchpriority="high" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+<style>
+  .rank-table { width:100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+  .rank-table th { text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .rank-table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .rank-table tr:last-child td { border-bottom: none; }
+  .rank-pos { width: 40px; font-weight: 700; color: var(--muted); text-align: center; }
+  .rank-1 { color: #fbbf24; } .rank-2 { color: #94a3b8; } .rank-3 { color: #d97706; }
+  .rank-username { font-weight: 600; }
+  .rank-km { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .rank-plan { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+  .rank-plan.premium { background: rgba(16,185,129,0.12); color: #10b981; }
+  .rank-plan.free { background: rgba(255,255,255,0.05); color: var(--muted); }
+  .rank-search { width:100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; margin-bottom: 16px; }
+  .rank-search:focus { border-color: var(--accent); }
+  .rank-search::placeholder { color: rgba(232,237,248,0.2); }
+  .rank-loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .rank-empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  @media(max-width:600px) {
+    .rank-table th, .rank-table td { padding: 10px 12px; font-size: 12px; }
+    .rank-pos { width: 30px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+      <div>
+        <h1>Sweeet Applications</h1>
+        <span>Ranking de motoristas</span>
+      </div>
+    </div>
+    <nav id="site-nav">
+      <a href="/">Início</a>
+      <a href="/ranking" class="active">Ranking</a>
+      <a href="/register" class="nav-guest">Criar Conta</a>
+      <a href="/login" class="nav-guest">Entrar</a>
+      <a href="/profile" class="nav-user" style="display:none;">Perfil</a>
+    </nav>
+  </header>
+
+  <h1>Ranking de KM</h1>
+  <p class="sub">Motoristas com mais quilômetros rodados usando o Virtual Mobile.</p>
+
+  <input class="rank-search" id="rank-search" type="text" placeholder="Filtrar por motorista..." oninput="filterRanking()">
+
+  <div id="rank-loading" class="rank-loading">Carregando ranking...</div>
+  <div id="rank-empty" class="rank-empty" style="display:none;">Nenhum motorista encontrado.</div>
+
+  <table class="rank-table" id="rank-table" style="display:none;">
+    <thead>
+      <tr>
+        <th class="rank-pos">#</th>
+        <th>Motorista</th>
+        <th style="text-align:right;">KM Rodados</th>
+        <th style="text-align:center;">Plano</th>
+      </tr>
+    </thead>
+    <tbody id="rank-body"></tbody>
+  </table>
+</div>
+<footer class="wrap">Sweet Applications &mdash; Soluções para ETS2 e American Truck Simulator</footer>
+
+<script>
+const API_URL = '';
+
+async function loadRanking() {
+  const loading = document.getElementById('rank-loading');
+  const table = document.getElementById('rank-table');
+  const empty = document.getElementById('rank-empty');
+  const tbody = document.getElementById('rank-body');
+
+  try {
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const r = await fetch(API_URL + '/api/ranking/km', { headers });
+    const data = await r.json();
+
+    loading.style.display = 'none';
+
+    if (!data.ranking || data.ranking.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    window._rankingData = data.ranking;
+    renderRanking(data.ranking);
+    table.style.display = '';
+  } catch(e) {
+    loading.textContent = 'Erro ao carregar ranking.';
+  }
+}
+
+function renderRanking(list) {
+  const tbody = document.getElementById('rank-body');
+  const empty = document.getElementById('rank-empty');
+  const table = document.getElementById('rank-table');
+
+  if (list.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = '';
+  tbody.innerHTML = list.map((u, i) => {
+    const posClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+    return '<tr>' +
+      '<td class="rank-pos ' + posClass + '">' + (medal || (i + 1)) + '</td>' +
+      '<td class="rank-username">' + escapeHtml(u.username) + '</td>' +
+      '<td class="rank-km" style="text-align:right;">' + formatKm(u.total_km) + ' km</td>' +
+      '<td style="text-align:center;"><span class="rank-plan ' + (u.plan === 'premium' ? 'premium' : 'free') + '">' + (u.plan === 'premium' ? 'Premium' : 'Grátis') + '</span></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function filterRanking() {
+  const q = document.getElementById('rank-search').value.trim().toLowerCase();
+  if (!window._rankingData) return;
+  if (!q) {
+    renderRanking(window._rankingData);
+    return;
+  }
+  const filtered = window._rankingData.filter(u => u.username.toLowerCase().includes(q));
+  renderRanking(filtered);
+}
+
+function formatKm(km) {
+  return Number(km || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    document.querySelectorAll('.nav-guest').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.nav-user').forEach(el => el.style.display = '');
+  }
+  loadRanking();
+});
+</script>
+</body>
+</html>

@@ -69,6 +69,12 @@ async function loadProfile() {
   planEl.style.color = planColor;
   if (planEl2) { planEl2.textContent = planText; planEl2.style.color = planColor; }
 
+  const kmEl = document.getElementById('pv-total-km');
+  if (kmEl) {
+    const km = data.total_km || 0;
+    kmEl.textContent = km.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' km';
+  }
+
   const empresaSection = document.getElementById('empresa-section');
   if (empresaSection) {
     empresaSection.style.display = data.is_company_owner ? '' : 'none';
