@@ -33,6 +33,7 @@
     <nav>
       <a href="/">Início</a>
       <a href="/ranking">Ranking</a>
+      <a href="/empresas">Empresas</a>
       <a href="/profile" class="active">Perfil</a>
     </nav>
   </header>
@@ -88,6 +89,18 @@
       <span id="reset-hwid-msg" style="font-size:11px;color:var(--muted);"></span>
     </div>
     <div style="font-size:10px;color:var(--muted);margin-top:4px;">Você pode resetar seu HWID 1 vez a cada 30 dias.</div>
+  </div>
+
+  <div class="profile-field" style="margin-top:16px;">
+    <div class="profile-field-label">Alterar PIN</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input id="cp-old" type="password" inputmode="numeric" maxlength="8" placeholder="PIN atual" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;">
+      <input id="cp-new" type="password" inputmode="numeric" maxlength="8" placeholder="Novo PIN (4-8 dígitos)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button id="change-pin-btn" class="btn btn-ghost" style="color:#3b82f6;border-color:rgba(59,130,246,0.3);font-size:12px;">Alterar PIN</button>
+        <span id="cp-msg" style="font-size:11px;color:var(--muted);"></span>
+      </div>
+    </div>
   </div>
 
   <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;">

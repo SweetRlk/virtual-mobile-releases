@@ -118,6 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
     const resetBtn = document.getElementById('reset-hwid-btn');
     if (resetBtn) resetBtn.addEventListener('click', resetHwid);
+    const cpBtn = document.getElementById('change-pin-btn');
+    if (cpBtn) cpBtn.addEventListener('click', changePin);
   }
 });
 
@@ -126,4 +128,17 @@ function showMsg(id, text, type) {
   if (!el) return;
   el.textContent = text;
   el.className = 'msg show ' + type;
+}
+
+async function changePin() {
+  const oldPin = document.getElementById('cp-old').value.trim();
+  const newPin = document.getElementById('cp-new').value.trim();
+  const msg = document.getElementById('cp-msg');
+  if (!oldPin || !newPin) { msg.textContent = 'Preencha ambos os campos.'; msg.style.color = '#f87171'; return; }
+  if (newPin.length < 4 || newPin.length > 8 || !/^\d+$/.test(newPin)) { msg.textContent = 'Novo PIN deve ter 4-8 dígitos numéricos.'; msg.style.color = '#f87171'; return; }
+  const { ok, data } = await api('/api/change-pin', { method: 'POST', body: JSON.stringify({ old_pin: oldPin, new_pin: newPin }) });
+  msg.textContent = ok ? '✅ PIN alterado com sucesso!' : data.error || 'Erro';
+  msg.style.color = ok ? '#10b981' : '#f87171';
+  if (ok) { document.getElementById('cp-old').value = ''; document.getElementById('cp-new').value = ''; }
+  setTimeout(() => { msg.textContent = ''; }, 4000);
 }

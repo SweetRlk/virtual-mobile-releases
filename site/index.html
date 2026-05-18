@@ -22,6 +22,7 @@
     <nav id="site-nav">
       <a href="/" class="active">Início</a>
       <a href="/ranking">Ranking</a>
+      <a href="/empresas">Empresas</a>
       <a href="/register" class="nav-guest">Criar Conta</a>
       <a href="/login" class="nav-guest">Entrar</a>
       <a href="/profile" class="nav-user" style="display:none;">Perfil</a>
@@ -218,6 +219,6 @@
 <footer class="wrap">Desenvolvido por SweetRlk &mdash; <a href="https://wa.me/5517936363025" style="color:var(--muted);text-decoration:none">Suporte</a></footer>
 <script>document.addEventListener("DOMContentLoaded",()=>{const o=new IntersectionObserver(e=>e.forEach(({isIntersecting:t,target:n})=>{t&&(n.classList.add("active"),o.unobserve(n))}),{threshold:.15});document.querySelectorAll(".reveal").forEach(e=>o.observe(e));
 fetch("/api/stats").then(r=>r.json()).then(d=>{const e=document.querySelector(".stat-number");if(e){const t=+d.total||0;e.dataset.target=t;const n=()=>{const i=+e.textContent.replace(/\D/g,"")||0,d=Math.ceil((t-i)/20);d>0?(e.textContent=i+d,requestAnimationFrame(n)):e.textContent=t};requestAnimationFrame(n)}});
-const t=localStorage.getItem('token');const u=JSON.parse(localStorage.getItem('user')||'{}');if(t&&u&&u.username){const n=document.querySelector('header nav');if(n){n.innerHTML=`<a href="/">Início</a><a href="/ranking">Ranking</a><a href="/profile">${u.username}</a><a href="#" onclick="localStorage.removeItem('token');localStorage.removeItem('user');location.href='/login'" style="color:var(--muted)">Sair</a>`}}})</script>
+const t=localStorage.getItem('token');const u=JSON.parse(localStorage.getItem('user')||'{}');if(t&&u&&u.username){const n=document.querySelector('header nav');if(n){n.innerHTML=`<a href="/">Início</a><a href="/ranking">Ranking</a><a href="/empresas">Empresas</a><a href="/profile">${u.username}</a><a href="#" onclick="localStorage.removeItem('token');localStorage.removeItem('user');location.href='/login'" style="color:var(--muted)">Sair</a>`}}})</script>
 </body>
 </html>

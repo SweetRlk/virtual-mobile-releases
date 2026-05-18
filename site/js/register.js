@@ -1,10 +1,16 @@
 const API_URL = '';
 let _turnstileWidgetId = null;
+let _challengeToken = '';
 
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('register-form');
   const msg = document.getElementById('msg');
   const estadoSelect = document.getElementById('estado');
+
+  // Busca challenge token e config
+  fetch(API_URL + '/api/challenge').then(r => r.json()).then(d => {
+    _challengeToken = d.challenge || '';
+  }).catch(() => {});
 
   // Carrega config e init Turnstile se habilitado
   fetch(API_URL + '/api/public-config').then(r => r.json()).then(cfg => {
@@ -78,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const r = await fetch(API_URL + '/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, pin, discord_id, estado, captcha_token })
+        body: JSON.stringify({ username, pin, discord_id, estado, captcha_token, challenge: _challengeToken })
       });
       const d = await r.json();
       if (r.ok) {
