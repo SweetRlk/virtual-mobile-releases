@@ -63,8 +63,8 @@
   <p class="sub">Competição entre transportadoras parceiras. KM total e ganhos acumulados de todos os motoristas.</p>
 
   <div class="rk-tabs">
-    <button class="rk-tab active" data-rk="empresas-km" onclick="switchRk('empresas-km')">🏢 KM Rodados</button>
-    <button class="rk-tab" data-rk="empresas-ganhos" onclick="switchRk('empresas-ganhos')">💰 Ganhos (R$)</button>
+    <button class="rk-tab active" data-rk="empresas-km" onclick="switchRk('empresas-km')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h4v4H7zM13 8h4v4h-4zM3 16h18"/></svg> KM Rodados</button>
+    <button class="rk-tab" data-rk="empresas-ganhos" onclick="switchRk('empresas-ganhos')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M8.5 10.5h7"/></svg> Ganhos (R$)</button>
   </div>
 
   <input class="rank-search" id="rank-search" type="text" placeholder="Filtrar empresa..." oninput="filterRanking()">
@@ -145,10 +145,10 @@ function renderRanking(list) {
   thead.innerHTML = '<tr><th class="rank-pos">#</th><th>Empresa</th><th style="text-align:right;">' + (isKm ? 'KM Rodados' : 'Ganhos (R$)') + '</th><th style="text-align:center;">Motoristas</th></tr>';
   tbody.innerHTML = list.map((u, i) => {
     const posClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+    const medal = i === 0 ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;"><circle cx="12" cy="8" r="5" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/><path d="M12 13L9 21l3-2 3 2z" fill="#fbbf24" stroke="#d97706" stroke-width=".8"/></svg>' : i === 1 ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;"><circle cx="12" cy="8" r="5" fill="#94a3b8" stroke="#64748b" stroke-width="1.2"/><path d="M12 13L9 21l3-2 3 2z" fill="#94a3b8" stroke="#64748b" stroke-width=".8"/></svg>' : i === 2 ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;"><circle cx="12" cy="8" r="5" fill="#d97706" stroke="#92400e" stroke-width="1.2"/><path d="M12 13L9 21l3-2 3 2z" fill="#d97706" stroke="#92400e" stroke-width=".8"/></svg>' : '';
     const val = isKm ? fmt(u[valKey]) + ' km' : 'R$ ' + fmt(u[valKey]);
     return '<tr><td class="rank-pos ' + posClass + '">' + (medal || (i + 1)) + '</td>' +
-      '<td><div class="rk-company-name">' + esc(u.company) + '</div><div class="rk-owner">👤 ' + esc(u.owner) + '</div></td>' +
+      '<td><div class="rk-company-name">' + esc(u.company) + '</div><div class="rk-owner"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:3px;opacity:.5;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>' + esc(u.owner) + '</div></td>' +
       '<td class="rank-km" style="text-align:right;">' + val + '</td>' +
       '<td style="text-align:center;color:var(--muted);font-size:13px;">' + u.drivers + '</td></tr>';
   }).join('');

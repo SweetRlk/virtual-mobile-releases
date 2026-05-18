@@ -66,8 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
         '<div class="emp-logo">' + logo + '</div>' +
         '<div class="emp-info">' +
         '<div class="emp-name">' + esc(e.company) + '</div>' +
-        '<div class="emp-owner">👤 ' + esc(e.owner) + '</div>' +
-        '<div class="emp-drivers">🚛 ' + e.drivers + ' motorista' + (e.drivers !== 1 ? 's' : '') + '</div>' +
+        '<div class="emp-owner"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:3px;opacity:.5;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>' + esc(e.owner) + '</div>' +
+        '<div class="emp-drivers"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:3px;opacity:.5;"><rect x="4" y="6" width="16" height="12" rx="2"/><circle cx="9" cy="14" r="2" fill="currentColor"/><circle cx="15" cy="14" r="2" fill="currentColor"/><path d="M4 12h16"/></svg>' + e.drivers + ' motorista' + (e.drivers !== 1 ? 's' : '') + '</div>' +
         '</div></div>';
     }).join('');
   }).catch(() => {
