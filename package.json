@@ -1,6 +1,6 @@
 {
   "name": "virtual-mobile",
-  "version": "1.0.73",
+  "version": "1.0.77",
   "main": "main.js",
   "description": "Celular virtual para ETS2 e ATS",
   "author": "SWE",
@@ -53,7 +53,6 @@
       "mra-app.html",
       "mra-bridge.js",
       "gps-map.html",
-      "maps/**",
       "img/**",
       "node_modules/**",
       "!data/**",
@@ -77,6 +76,7 @@
     ]
   },
   "dependencies": {
+    "adm-zip": "^0.5.17",
     "discord-rpc": "^4.0.1",
     "electron-updater": "^6.8.3",
     "koffi": "^2.15.6"

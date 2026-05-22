@@ -25,3 +25,4 @@ data/
 *.db
 .env
 server/.env
+maps.zip
