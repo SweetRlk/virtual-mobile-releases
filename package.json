@@ -1,6 +1,6 @@
 {
   "name": "virtual-mobile",
-  "version": "1.0.82",
+  "version": "1.0.83",
   "main": "main.js",
   "description": "Celular virtual para ETS2 e ATS",
   "author": "SWE",
@@ -53,6 +53,9 @@
       "mra-app.html",
       "mra-bridge.js",
       "gps-map.html",
+      "tacografo.html",
+      "sounds/**",
+      "fonts/**",
       "img/**",
       "img/icons/**",
       "node_modules/**",

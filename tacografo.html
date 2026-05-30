@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tacógrafo Positron TC100</title>
+<style>
+@font-face {
+    font-family: 'DSEG7';
+    src: url('fonts/DSEG7Modern-Light.ttf') format('truetype');
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+body{
+    width:100vw; height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    background: transparent;
+    overflow:hidden;
+    font-family:Arial, Helvetica, sans-serif;
+    user-select:none;
+}
+
+.tacografo{
+    width:100%; aspect-ratio:1120/340;
+    flex-shrink:0;
+    position:relative;
+    border-radius:1.8vw;
+    background: linear-gradient(180deg, #3a3d42 0%, #232427 45%, #1a1b1d 100%);
+    border:0.2vw solid #0f0f10;
+    box-shadow: 0 2.5vw 5vw rgba(0,0,0,.45), inset 0 0.1vw 0 rgba(255,255,255,.08);
+    overflow:hidden;
+}
+.tacografo::before{
+    content:''; position:absolute; inset:0;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.015), rgba(255,255,255,.015) 0.1vw, transparent 0.1vw, transparent 0.3vw);
+    opacity:.8;
+}
+.tacografo::after{
+    content:''; position:absolute; top:0; left:0;
+    width:100%; height:32%;
+    background: linear-gradient(180deg, rgba(255,255,255,.10), transparent);
+    pointer-events:none;
+}
+
+.screw{
+    width:2.5%; aspect-ratio:1; border-radius:50%; position:absolute;
+    background: radial-gradient(circle at 30% 30%, #9b9b9b 0%, #525252 35%, #1d1d1d 100%);
+    border:0.18vw solid #111;
+    box-shadow: inset 0 0.1vw 0.2vw rgba(255,255,255,.18), 0 0.25vw 0.7vw rgba(0,0,0,.5);
+}
+.screw::before{
+    content:''; position:absolute; top:50%; left:50%;
+    width:50%; height:7%; background:#111;
+    transform: translate(-50%,-50%) rotate(25deg);
+}
+.s1{ top:5.3%; left:1.6%; }
+.s2{ top:5.3%; right:1.6%; }
+.s3{ bottom:5.3%; left:1.6%; }
+.s4{ bottom:5.3%; right:1.6%; }
+
+.logo{
+    position:absolute; top:4.7%; left:22.3%;
+    color:#f5f5f5; font-size:1.6vw; font-weight:700; letter-spacing:0.1vw;
+    text-shadow: 0 0 0.6vw rgba(255,255,255,.12);
+}
+.logo span{ opacity:.65; }
+
+.display{
+    position:absolute; left:4.5%; top:17%;
+    width:45.5%; height:50%; border-radius:1vw;
+    background: linear-gradient(180deg, #171717 0%, #090909 100%);
+    border:0.25vw solid #020202;
+    overflow:hidden;
+    box-shadow: inset 0 0 1.8vw rgba(255,255,255,.03), 0 0.45vw 1.6vw rgba(0,0,0,.55);
+}
+.display::before{
+    content:''; position:absolute; inset:0; z-index:1;
+    background: repeating-linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.12) 0.08vw, transparent 0.08vw, transparent 0.16vw),
+                repeating-linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.06) 0.08vw, transparent 0.08vw, transparent 0.16vw);
+    opacity:.8;
+    pointer-events:none;
+}
+.display::after{
+    content:''; position:absolute; top:-20%; left:-20%;
+    width:80%; height:180%; transform:rotate(18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+    animation:shine 8s linear infinite;
+}
+@keyframes shine{
+    from{ transform: translateX(-200%) rotate(18deg); }
+    to{ transform: translateX(500%) rotate(18deg); }
+}
+
+.speed{
+    position:absolute; top:5.9%; left:4.7%;
+    font-size:11vw; font-weight:400; letter-spacing:0.5vw;
+    color:#fff; font-family:'DSEG7', 'Consolas', monospace;
+    text-shadow: 0 0 0.3vw rgba(255,255,255,0.3);
+}
+.kmh{
+    position:absolute; top:33%; left:51%;
+    font-size:2.7vw; color:rgba(255,255,255,0.9);
+    font-family:'DSEG7', 'Consolas', monospace; opacity:.9;
+}
+.date{
+    position:absolute; top:14%; right:3.9%;
+    text-align:right; color:rgba(255,255,255,0.9);
+    font-size:2.1vw; line-height:1.15;
+    font-family:'DSEG7', 'Consolas', monospace;
+}
+.km{
+    position:absolute; bottom:13%; left:5.5%;
+    color:rgba(255,255,255,0.9); font-size:2.5vw;
+    font-family:'DSEG7', 'Consolas', monospace;
+}
+.km-line{
+    position:absolute; bottom:19%; right:4.7%;
+    color:rgba(255,255,255,0.9); font-size:2.7vw; letter-spacing:0.4vw;
+    font-family:'DSEG7', 'Consolas', monospace;
+}
+
+.buttons{
+    position:absolute; left:11.2%; bottom:10%;
+    display:flex; gap:1.6vw;
+}
+.btn{
+    width:7.1vw; height:4.5vw; border-radius:1.3vw;
+    border:0.18vw solid #111;
+    background: linear-gradient(180deg, #7a7f88 0%, #43474e 50%, #2f3338 100%);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:2vw; font-weight:700;
+    cursor:pointer; user-select:none;
+    box-shadow: inset 0 0.18vw 0.35vw rgba(255,255,255,.15), inset 0 -0.18vw 0.27vw rgba(0,0,0,.5), 0 0.45vw 0.9vw rgba(0,0,0,.45);
+    transition:.12s;
+}
+.btn:hover{ filter:brightness(1.08); }
+.btn:active{
+    transform: translateY(0.18vw);
+    box-shadow: inset 0 0.27vw 0.54vw rgba(0,0,0,.6);
+}
+
+.cover{
+    position:absolute; top:8.2%; right:4.3%;
+    width:44.6%; height:75%; border-radius:1.4vw;
+    background: linear-gradient(180deg, #2f3135 0%, #18191b 100%);
+    border:0.27vw solid #090909;
+    box-shadow: inset 0 0.18vw 0.54vw rgba(255,255,255,.05), 0 0.35vw 1.3vw rgba(0,0,0,.45);
+    overflow:hidden;
+}
+.cover::before{
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 30%);
+}
+
+.speaker{
+    position:absolute; top:16%; left:50%;
+    transform:translateX(-50%);
+}
+.line{
+    height:0.5vw; border-radius:999px; background:#111;
+    margin-bottom:0.9vw;
+    box-shadow: inset 0 0.1vw 0.1vw rgba(255,255,255,.06);
+}
+.l1{ width:8.5vw; }
+.l2{ width:5.4vw; margin-left:1.6vw; }
+.l3{ width:2.7vw; margin-left:3vw; }
+
+.slot{
+    position:absolute; bottom:27%; left:50%;
+    transform:translateX(-50%);
+    width:32vw; height:1.1vw; border-radius:2vw;
+    background:#0b0b0b;
+    box-shadow: inset 0 0.18vw 0.36vw rgba(255,255,255,.06), 0 0.1vw 0.1vw rgba(255,255,255,.03);
+    z-index:5;
+}
+
+/* Papel da impressao */
+.paper{
+    position:fixed;
+    width:32vw;
+    background:#f5f0e8;
+    color:#1a1a1a;
+    border-radius:0.3vw;
+    padding:1.8vw 2vw 1.4vw;
+    font-family:"Courier New", monospace;
+    font-size:1.4vw;
+    line-height:1.6;
+    z-index:9999;
+    box-shadow:0 0.5vw 2vw rgba(0,0,0,0.5);
+    opacity:0;
+    pointer-events:none;
+    overflow:hidden;
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
+}
+.paper::before{
+    content:''; position:absolute;
+    top:-1.4vw; left:50%; transform:translateX(-50%);
+    width:0; height:0;
+    border-left:1.6vw solid transparent;
+    border-right:1.6vw solid transparent;
+    border-bottom:1.6vw solid #f5f0e8;
+}
+.paper.printing{
+    max-height:60vh;
+    padding-top:2vw;
+    padding-bottom:1.4vw;
+    opacity:1;
+    pointer-events:all;
+    transition:max-height 3s ease-out, padding 3s ease-out, opacity 0.3s;
+}
+.paper .pap-title{
+    font-size:1.7vw; font-weight:700; text-align:center;
+    letter-spacing:0.3vw; margin-bottom:0.8vw;
+    border-bottom:1px dashed #999; padding-bottom:0.5vw;
+}
+.paper .pap-row{
+    display:flex; justify-content:space-between;
+    font-size:1.3vw; margin:0.3vw 0;
+}
+.paper .pap-dots{
+    text-align:center; letter-spacing:0.5vw;
+    border-top:1px dashed #ccc; margin-top:0.6vw; padding-top:0.4vw;
+    font-size:1.1vw; color:#999;
+}
+
+.close-btn{
+    position:absolute; top:3.5%; right:3.5%;
+    width:3.2vw; height:3.2vw; border-radius:50%;
+    background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.6); font-size:1.6vw;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:10;
+    transition: all 0.15s;
+}
+.close-btn:hover{ background:rgba(255,59,48,0.6); color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="tacografo">
+    <div class="screw s1"></div>
+    <div class="screw s2"></div>
+    <div class="screw s3"></div>
+    <div class="screw s4"></div>
+
+    <div class="close-btn" title="Fechar" onclick="ipc.send('tacografo-close')" style="display:none;">✕</div>
+
+    <div class="logo">POSITRON <span>| TC100</span></div>
+
+    <div class="display">
+        <div class="speed" id="speed-display">0</div>
+        <div class="kmh">km/h</div>
+        <div class="date" id="date-display">--/--/--<br>--:--</div>
+        <div class="km" id="odometer-display">0 km</div>
+        <div class="km-line" id="activity-display">PARADO</div>
+    </div>
+
+    <div class="buttons">
+        <div class="btn" onclick="ipc.send('tacografo-close')">↩</div>
+        <div class="btn">⌃</div>
+        <div class="btn">⌄</div>
+        <div class="btn" onclick="printNote()">OK</div>
+    </div>
+
+    <div class="cover">
+        <div class="speaker">
+            <div class="line l1"></div>
+            <div class="line l2"></div>
+            <div class="line l3"></div>
+        </div>
+        <div class="slot"></div>
+    </div>
+</div>
+
+<div class="paper" id="paper" onclick="this.classList.remove('printing')">
+    <div class="pap-title">POSITRON TC100</div>
+    <div class="pap-row"><span>Data:</span><span id="pap-date">--/--/--</span></div>
+    <div class="pap-row"><span>Hora:</span><span id="pap-time">--:--</span></div>
+    <div class="pap-row"><span>Caminhão:</span><span id="pap-truck">---</span></div>
+    <div class="pap-row"><span>Placa:</span><span id="pap-plate">---</span></div>
+    <div class="pap-row"><span>Carga:</span><span id="pap-cargo">---</span></div>
+    <div class="pap-row"><span>Origem:</span><span id="pap-src">---</span></div>
+    <div class="pap-row"><span>Destino:</span><span id="pap-dst">---</span></div>
+    <div class="pap-row"><span>Km total:</span><span id="pap-km">0 km</span></div>
+    <div class="pap-row"><span>Velocidade:</span><span id="pap-speed">0 km/h</span></div>
+    <div class="pap-row"><span>Atividade:</span><span id="pap-activity">---</span></div>
+    <div class="pap-dots">- - - - - - - - - - -</div>
+</div>
+
+<script>
+    var ipc = require('electron').ipcRenderer;
+
+    let _odometerKm = 0;
+    let _activity = 'DESLIGADO';
+    let _speed = 0;
+    let _truck = '';
+    let _plate = '';
+    let _cargo = '';
+    let _citySrc = '';
+    let _cityDst = '';
+    let _gameMinutes = 0;
+    let _gameDay = '';
+
+    // Som de impressão
+    var printAudio = new Audio('sounds/print.mp3');
+    printAudio.volume = 0.6;
+
+    function playPrintSound() {
+        try {
+            printAudio.currentTime = 0;
+            printAudio.play();
+        } catch(e) {}
+    }
+
+    function pad2(n) { return String(Math.floor(n)).padStart(2, '0'); }
+
+    function updateClock() {
+        if (_gameMinutes > 0 || _gameDay) {
+            var h = Math.floor(_gameMinutes / 60) % 24;
+            var m = _gameMinutes % 60;
+            document.getElementById('date-display').innerHTML =
+                (_gameDay || '---') + '<br>' + pad2(h) + ':' + pad2(m);
+        } else {
+            var now = new Date();
+            document.getElementById('date-display').innerHTML =
+                pad2(now.getDate()) + '/' + pad2(now.getMonth()+1) + '/' + String(now.getFullYear()).slice(-2) +
+                '<br>' + pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+        }
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    ipc.on('tacografo-telemetry', function(_e, data) {
+        if (!data) return;
+
+        _speed = Math.abs(data.speed || 0);
+        var speedDisplay = Math.round(_speed);
+        document.getElementById('speed-display').textContent = String(speedDisplay).padStart(3, '0');
+
+        if (data.odometer > 0) _odometerKm = Math.round(data.odometer);
+        document.getElementById('odometer-display').textContent = _odometerKm.toLocaleString('pt-BR') + ' km';
+
+        var rpm = data.rpm || 0;
+        var gear = data.gear || 0;
+        var spd = data.speed || 0;
+
+        if (Math.abs(spd) > 0.5 && gear !== 0) {
+            _activity = 'DIRIGINDO';
+        } else if (rpm > 0) {
+            _activity = 'PARADO';
+        } else {
+            _activity = 'DESLIGADO';
+        }
+        document.getElementById('activity-display').textContent = _activity;
+
+        _truck = (data.truckBrand || '') + ' ' + (data.truckName || '');
+        _plate = data.truckLicensePlate || '';
+        _cargo = data.cargo || '';
+        _citySrc = data.citySrc || '';
+        _cityDst = data.cityDst || '';
+        _gameMinutes = data.gameTimeAbsMinutes || 0;
+        _gameDay = data.gameDate || '';
+        updateClock();
+    });
+
+    function printNote() {
+        var paper = document.getElementById('paper');
+        if (paper.classList.contains('printing')) {
+            paper.classList.remove('printing');
+            paper.style.top = '';
+            paper.style.right = '';
+            return;
+        }
+
+        var now = new Date();
+        document.getElementById('pap-date').textContent = pad2(now.getDate()) + '/' + pad2(now.getMonth()+1) + '/' + String(now.getFullYear()).slice(-2);
+        document.getElementById('pap-time').textContent = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+        document.getElementById('pap-km').textContent = _odometerKm.toLocaleString('pt-BR') + ' km';
+        document.getElementById('pap-speed').textContent = Math.round(_speed) + ' km/h';
+        document.getElementById('pap-activity').textContent = _activity;
+        document.getElementById('pap-truck').textContent = _truck || '---';
+        document.getElementById('pap-plate').textContent = _plate || '---';
+        document.getElementById('pap-cargo').textContent = _cargo || '---';
+        document.getElementById('pap-src').textContent = _citySrc || '---';
+        document.getElementById('pap-dst').textContent = _cityDst || '---';
+
+        var slot = document.querySelector('.slot');
+        if (slot) {
+            var rect = slot.getBoundingClientRect();
+            paper.style.top = (rect.bottom + 2) + 'px';
+            paper.style.right = (window.innerWidth - rect.right) + 'px';
+        }
+        paper.classList.add('printing');
+        playPrintSound();
+    }
+</script>
+
+</body>
+</html>
