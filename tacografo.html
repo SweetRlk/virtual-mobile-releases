@@ -27,7 +27,7 @@ body{
     border-radius:1.8vw;
     background: linear-gradient(180deg, #3a3d42 0%, #232427 45%, #1a1b1d 100%);
     border:0.2vw solid #0f0f10;
-    box-shadow: 0 2.5vw 5vw rgba(0,0,0,.45), inset 0 0.1vw 0 rgba(255,255,255,.08);
+    box-shadow: inset 0 0.1vw 0 rgba(255,255,255,.08);
     overflow:hidden;
 }
 .tacografo::before{
@@ -225,6 +225,41 @@ body{
     font-size:1.1vw; color:#999;
 }
 
+/* Menu do display */
+.display-menu{
+    position:absolute; inset:0; z-index:5;
+    background:rgba(0,0,0,0.9);
+    display:none; flex-direction:column;
+    justify-content:flex-start;
+    padding:0.5vw 3vw 1vw;
+}
+.display-menu.active{ display:flex; }
+.display-menu .menu-title{
+    font-family:'DSEG7','Consolas',monospace;
+    font-size:1.5vw; color:rgba(255,255,255,0.4);
+    text-align:center; margin:0.5vw 0 0.8vw;
+    letter-spacing:0.3vw;
+}
+.display-menu .menu-item{
+    font-family:'DSEG7','Consolas',monospace;
+    font-size:1.3vw; color:rgba(255,255,255,0.3);
+    padding:0.25vw 0; cursor:pointer;
+    transition:color 0.15s;
+}
+.display-menu .menu-item.selected{
+    color:#fff;
+}
+.display-menu .menu-item.selected::before{
+    content:'\25B6'; margin-right:0.4vw;
+    font-size:1vw; color:rgba(255,255,255,0.5);
+}
+.display-menu .menu-hint{
+    font-family:'DSEG7','Consolas',monospace;
+    font-size:0.8vw; color:rgba(255,255,255,0.12);
+    text-align:center; margin-top:0.5vw;
+    letter-spacing:0.2vw;
+}
+
 .close-btn{
     position:absolute; top:3.5%; right:3.5%;
     width:3.2vw; height:3.2vw; border-radius:50%;
@@ -255,13 +290,38 @@ body{
         <div class="date" id="date-display">--/--/--<br>--:--</div>
         <div class="km" id="odometer-display">0 km</div>
         <div class="km-line" id="activity-display">PARADO</div>
+
+        <!-- Menu de configuração -->
+        <div class="display-menu" id="display-menu">
+            <div class="menu-title" id="menu-title">MENU</div>
+            <div id="menu-items-main">
+                <div class="menu-item selected" data-action="print">Imprimir</div>
+                <div class="menu-item" data-action="activity">Atividade</div>
+                <div class="menu-item" data-action="driver">Motorista</div>
+                <div class="menu-item" data-action="config">Config.</div>
+                <div class="menu-item" data-action="exit">Sair</div>
+            </div>
+            <div id="menu-items-activity" style="display:none;">
+                <div class="menu-item selected" data-action="set-activity" data-value="DIRIGINDO">Dirigindo</div>
+                <div class="menu-item" data-action="set-activity" data-value="DESCANSO">Descanso</div>
+                <div class="menu-item" data-action="set-activity" data-value="DISPONIVEL">Disponivel</div>
+                <div class="menu-item" data-action="set-activity" data-value="TRABALHO">Trabalho</div>
+                <div class="menu-item" data-action="set-activity" data-value="AUTO">Auto</div>
+            </div>
+            <div id="menu-items-config" style="display:none;">
+                <div class="menu-item selected" data-action="resize" data-value="small">Pequeno 35%</div>
+                <div class="menu-item" data-action="resize" data-value="medium">Medio 45%</div>
+                <div class="menu-item" data-action="resize" data-value="large">Grande 55%</div>
+            </div>
+            <div class="menu-hint">↕ OK ↩</div>
+        </div>
     </div>
 
     <div class="buttons">
-        <div class="btn" onclick="ipc.send('tacografo-close')">↩</div>
-        <div class="btn">⌃</div>
-        <div class="btn">⌄</div>
-        <div class="btn" onclick="printNote()">OK</div>
+        <div class="btn" onclick="handleBack()">↩</div>
+        <div class="btn" onclick="menuUp()">⌃</div>
+        <div class="btn" onclick="menuDown()">⌄</div>
+        <div class="btn" onclick="handleOk()">OK</div>
     </div>
 
     <div class="cover">
@@ -294,6 +354,7 @@ body{
 
     let _odometerKm = 0;
     let _activity = 'DESLIGADO';
+    let _manualActivity = false;
     let _speed = 0;
     let _truck = '';
     let _plate = '';
@@ -346,12 +407,14 @@ body{
         var gear = data.gear || 0;
         var spd = data.speed || 0;
 
-        if (Math.abs(spd) > 0.5 && gear !== 0) {
-            _activity = 'DIRIGINDO';
-        } else if (rpm > 0) {
-            _activity = 'PARADO';
-        } else {
-            _activity = 'DESLIGADO';
+        if (!_manualActivity) {
+            if (Math.abs(spd) > 0.5 && gear !== 0) {
+                _activity = 'DIRIGINDO';
+            } else if (rpm > 0) {
+                _activity = 'PARADO';
+            } else {
+                _activity = 'DESLIGADO';
+            }
         }
         document.getElementById('activity-display').textContent = _activity;
 
@@ -365,7 +428,138 @@ body{
         updateClock();
     });
 
+    // === MENU DO DISPLAY ===
+    var _menuOpen = false;
+    var _menuIdx = 0;
+    var _menuLevel = 'main'; // 'main' | 'activity' | 'config'
+    var _menuEl = document.getElementById('display-menu');
+    var _mainItems = document.getElementById('menu-items-main');
+    var _actItems = document.getElementById('menu-items-activity');
+    var _cfgItems = document.getElementById('menu-items-config');
+    var _menuTitle = document.getElementById('menu-title');
+
+    function getCurrentItems() {
+        if (_menuLevel === 'activity') return _actItems;
+        if (_menuLevel === 'config') return _cfgItems;
+        return _mainItems;
+    }
+
+    function showSubMenu(id, title) {
+        _menuIdx = 0;
+        _menuTitle.textContent = title;
+        _mainItems.style.display = 'none';
+        _actItems.style.display = 'none';
+        _cfgItems.style.display = 'none';
+        document.getElementById('menu-items-' + id).style.display = '';
+    }
+
+    function openMenu() {
+        _menuIdx = 0;
+        _menuLevel = 'main';
+        _menuOpen = true;
+        _menuTitle.textContent = 'MENU';
+        _mainItems.style.display = '';
+        _actItems.style.display = 'none';
+        _cfgItems.style.display = 'none';
+        _menuEl.classList.add('active');
+        updateMenuSelection();
+    }
+
+    function closeMenu() {
+        _menuOpen = false;
+        _menuEl.classList.remove('active');
+    }
+
+    function updateMenuSelection() {
+        var items = getCurrentItems().querySelectorAll('.menu-item');
+        items.forEach(function(item, i) {
+            item.classList.toggle('selected', i === _menuIdx);
+        });
+        // Habilita hint
+        _menuItems = items;
+    }
+
+    function menuUp() {
+        if (!_menuOpen) return;
+        var items = getCurrentItems().querySelectorAll('.menu-item');
+        _menuIdx = (_menuIdx - 1 + items.length) % items.length;
+        updateMenuSelection();
+    }
+
+    function menuDown() {
+        if (!_menuOpen) return;
+        var items = getCurrentItems().querySelectorAll('.menu-item');
+        _menuIdx = (_menuIdx + 1) % items.length;
+        updateMenuSelection();
+    }
+
+    function handleOk() {
+        if (!_menuOpen) { openMenu(); return; }
+
+        var items = getCurrentItems().querySelectorAll('.menu-item');
+        var item = items[_menuIdx];
+        if (!item) return;
+        var action = item.dataset.action;
+        var value = item.dataset.value;
+
+        if (action === 'activity') {
+            _menuLevel = 'activity';
+            showSubMenu('activity', 'ATIVIDADE');
+            updateMenuSelection();
+        } else if (action === 'config') {
+            _menuLevel = 'config';
+            showSubMenu('config', 'CONFIG');
+            updateMenuSelection();
+        } else if (action === 'resize') {
+            ipc.send('tacografo-resize', value);
+            closeMenu();
+        } else if (action === 'set-activity') {
+            setActivity(value);
+            closeMenu();
+        } else if (action === 'print') {
+            printNote(); closeMenu();
+        } else if (action === 'exit') {
+            closeMenu();
+        } else {
+            closeMenu();
+        }
+    }
+
+    function handleBack() {
+        if (!_menuOpen) { ipc.send('tacografo-close'); return; }
+        if (_menuLevel === 'activity' || _menuLevel === 'config') {
+            _menuLevel = 'main';
+            _menuIdx = 0;
+            _menuTitle.textContent = 'MENU';
+            showSubMenu('main', 'MENU');
+            _mainItems.style.display = '';
+            _actItems.style.display = 'none';
+            _cfgItems.style.display = 'none';
+            updateMenuSelection();
+        } else {
+            closeMenu();
+        }
+    }
+
+    function setActivity(mode) {
+        if (mode === 'AUTO') {
+            _manualActivity = false;
+        } else {
+            _activity = mode;
+            _manualActivity = true;
+        }
+        document.getElementById('activity-display').textContent = _manualActivity ? _activity : 'AUTO';
+    }
+
+    function cycleActivity() {
+        var modes = ['DIRIGINDO', 'DESCANSO', 'DISPONIVEL', 'TRABALHO', 'AUTO'];
+        var idx = modes.indexOf(_activity);
+        var next = modes[(idx + 1) % modes.length];
+        setActivity(next);
+    }
+
     function printNote() {
+        closeMenu();
         var paper = document.getElementById('paper');
         if (paper.classList.contains('printing')) {
             paper.classList.remove('printing');
