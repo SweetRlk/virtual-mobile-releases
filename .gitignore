@@ -28,6 +28,14 @@ deploy.bat
 server/
 data/
 sounds/
+api-musica/
+fonts/
+img/
+maps/
+dashboard.css
+dashboard.jpg
+icon.ico
+REGRAS.md
 scs-telemetry.dll
 
 # === OUTROS ===
