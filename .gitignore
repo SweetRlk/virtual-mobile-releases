@@ -10,6 +10,9 @@ overlay.html
 main.js
 preload.js
 telemetry.js
+verify.js
+discord-rpc.js
+telemetry-bridge.js
 restore.js
 deploy.js
 obfuscate.js
