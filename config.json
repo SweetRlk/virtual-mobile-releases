@@ -1,0 +1,13 @@
+{
+  "api": {
+    "url": "https://sweetrlk.com.br"
+  },
+  "preferredDisplayId": 2528732444,
+  "obsCaptureMode": false,
+  "trayIconEnabled": true,
+  "startWithWindows": false,
+  "autoLaunchGame": "ETS2",
+  "maps": {
+    "downloadUrl": "https://github.com/SweetRlk/virtual-mobile-releases/releases/download/gg/maps.zip"
+  }
+}

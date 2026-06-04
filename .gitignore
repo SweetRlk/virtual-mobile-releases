@@ -13,15 +13,22 @@ telemetry.js
 verify.js
 discord-rpc.js
 telemetry-bridge.js
+mra-bridge.js
+dashboard.js
+dashboard.html
+tacografo.html
+mra-app.html
+gps-map.html
 restore.js
 deploy.js
 obfuscate.js
 installer.nsh
 build.bat
 deploy.bat
-config.json
 server/
 data/
+sounds/
+scs-telemetry.dll
 
 # === OUTROS ===
 *.log
