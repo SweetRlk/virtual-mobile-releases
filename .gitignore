@@ -44,3 +44,49 @@ scs-telemetry.dll
 .env
 server/.env
 maps.zip
+# === DEPENDÊNCIAS ===
+node_modules/
+.backup/
+
+# === BUILD OUTPUT (vai como release asset, não via git) ===
+dist/
+
+# === CÓDIGO FONTE (nunca vai pro repo público) ===
+overlay.html
+main.js
+preload.js
+telemetry.js
+verify.js
+discord-rpc.js
+telemetry-bridge.js
+mra-bridge.js
+dashboard.js
+dashboard.html
+tacografo.html
+mra-app.html
+gps-map.html
+restore.js
+deploy.js
+obfuscate.js
+installer.nsh
+build.bat
+deploy.bat
+server/
+data/
+sounds/
+api-musica/
+fonts/
+img/
+maps/
+dashboard.css
+dashboard.jpg
+icon.ico
+REGRAS.md
+scs-telemetry.dll
+
+# === OUTROS ===
+*.log
+*.db
+.env
+server/.env
+maps.zip
