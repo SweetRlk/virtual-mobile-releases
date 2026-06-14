@@ -16,6 +16,7 @@ telemetry-bridge.js
 mra-bridge.js
 dashboard.js
 dashboard.html
+splash.html
 tacografo.html
 mra-app.html
 gps-map.html
