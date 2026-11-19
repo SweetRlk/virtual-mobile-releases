@@ -1,0 +1,38 @@
+# === DEPENDÊNCIAS ===
+node_modules/
+
+# === SAÍDAS DE BUILD ===
+dist/
+release/
+
+# === TEMPORÁRIOS DE TRABALHO ===
+.work/
+
+# === BACKUPS LOCAIS ANTIGOS (última cópia legível; não versionar) ===
+.backup/
+
+# === FORA DO ESCOPO DESTE REPOSITÓRIO ===
+server/
+archive-migration-old/
+api-musica/
+maps/
+maps.zip
+
+# === SEGREDOS ===
+.env
+.env.*
+server/.env
+*.pem
+*.key
+
+# === BANCOS E DADOS DE USUÁRIO ===
+*.db
+*.db-journal
+*.sqlite
+server/sweet.db
+server/backups/
+
+# === OUTROS ===
+*.log
+*.tmp
+Thumbs.db
